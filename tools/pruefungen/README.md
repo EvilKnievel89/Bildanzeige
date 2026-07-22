@@ -14,7 +14,7 @@ tools\pruefungen\pruefen.ps1 -Nur brechen,gifdaten
 | Programm | Frage | belegt |
 |---|---|---|
 | [umgebung.cpp](umgebung.cpp) | Sind Direct2D und WIC da? | Abschnitt 1 |
-| [decoder.cpp](decoder.cpp) | Welche Formate kann dieser Rechner? | Abschnitt 1 |
+| [decoder.cpp](decoder.cpp) | Welche Formate kann dieser Rechner wirklich? | Abschnitt 1, 7 |
 | [pixelformate.cpp](pixelformate.cpp) | Womit kommen die Bilder herein? | Abschnitt 3 |
 | [gifdaten.cpp](gifdaten.cpp) | Was steht in einem GIF, und als welcher Typ? | Abschnitt 5 |
 | [ablegen.cpp](ablegen.cpp) | Hält die Pfadentnahme aus einem HDROP? | Abschnitt 6 |
@@ -30,6 +30,15 @@ Nachinstallieren vorhanden; das war die Voraussetzung der ganzen Wahl.
 ist ihre Herkunft: die Anwendung fragt zur Laufzeit dieselbe Liste ab, statt
 Endungen fest einzubauen. Ein nachinstalliertes Format erscheint dadurch von
 selbst in der Ordnerliste.
+
+Seit dem WebP-Befund erzeugt sie jeden Decoder außerdem einmal probeweise, denn
+angemeldet heißt nicht vorhanden. Auf dieser Maschine sind **14 angemeldet und
+13 brauchbar**: JPEG XL scheitert mit `0x88982F8B`, weil die zugehörige
+Erweiterung aus dem Microsoft Store fehlt. Das ist derselbe Fall, den ein
+Windows Server ohne Store bei WebP vor sich hat — die Prüfung beantwortet also
+in einer Zeile, ob ein Rechner betroffen ist und welches Format es trifft. Ein
+nicht erzeugbarer Decoder ist deshalb ein Befund über den Rechner, keine
+Beanstandung; der Rückgabewert bleibt 0.
 
 **pixelformate** — `fax.tif` kommt mit **1 bpp BlackWhite** herein,
 `mehrseitig.tif` mit 32bppBGRA. Ohne die Wandlung nach 32bppPBGRA bliebe das

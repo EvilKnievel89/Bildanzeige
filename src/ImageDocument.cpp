@@ -1,7 +1,70 @@
 #include "ImageDocument.h"
 
+#include <shlwapi.h>
+
+#include <cwctype>
+
 namespace
 {
+    // Windows meldet Decoder an, deren Umsetzung es nicht mitliefert: WebP,
+    // HEIF und AVIF stecken in Erweiterungen aus dem Microsoft Store, die sich
+    // unter der CLSID einhaengen, die windowscodecs.dll bereits fuehrt. Fehlt
+    // die Erweiterung, bleibt der Eintrag also stehen, und erst das Erzeugen
+    // scheitert -- daher WINCODEC_ERR_COMPONENTINITIALIZEFAILURE und nicht
+    // "Format unbekannt". Auf Windows Server gibt es keinen Store; dort fehlen
+    // sie im Auslieferungszustand allesamt.
+    //
+    // Der blosse Fehlercode fuehrt in die Irre, weil er nach einem Fehler in
+    // der Datei klingt. Der Hinweis nennt deshalb, was zu installieren ist.
+    struct StoreCodec
+    {
+        const wchar_t* extensions;   // klein geschrieben, jede in Semikola
+        const wchar_t* missing;      // schliesst an "es " an
+    };
+
+    const StoreCodec kStoreCodecs[] = {
+        { L";.webp;",
+          L"fehlt die Webp-Bildererweiterung aus dem Microsoft Store "
+          L"(Kennung 9PG2DK419DRG)" },
+        { L";.heic;.heif;.hif;.avci;.heics;.heifs;.avcs;",
+          L"fehlt die HEIF-Bilderweiterung aus dem Microsoft Store "
+          L"(Kennung 9PMMSR1CGPWG)" },
+        { L";.avif;.avifs;",
+          L"fehlen die HEIF-Bilderweiterung (9PMMSR1CGPWG) und die "
+          L"AV1-Videoerweiterung (9MVZQVXJBQ9V) aus dem Microsoft Store" },
+        { L";.jxl;",
+          L"fehlt die JPEG XL-Bilderweiterung aus dem Microsoft Store "
+          L"(Kennung 9MZPRTH5C0TB)" },
+    };
+
+    std::wstring MissingCodecHint(const std::wstring& path)
+    {
+        std::wstring extension = PathFindExtensionW(path.c_str());
+        for (wchar_t& c : extension)
+            c = static_cast<wchar_t>(std::towlower(c));
+
+        std::wstring hint = L"Der Decoder fuer ";
+        hint += extension.empty() ? L"dieses Format" : (L"\"" + extension + L"\"");
+        hint += L" ist angemeldet, laesst sich auf diesem Rechner aber nicht erzeugen";
+
+        const std::wstring needle = L";" + extension + L";";
+        for (const StoreCodec& codec : kStoreCodecs)
+        {
+            if (!extension.empty() && wcsstr(codec.extensions, needle.c_str()) != nullptr)
+            {
+                hint += L": es ";
+                hint += codec.missing;
+                hint += L". Auf Windows Server sind diese Erweiterungen im "
+                        L"Auslieferungszustand nicht vorhanden.";
+                return hint;
+            }
+        }
+
+        hint += L". Meist fehlt dazu eine Bilderweiterung aus dem Microsoft Store; "
+                L"auf Windows Server sind diese im Auslieferungszustand nicht vorhanden.";
+        return hint;
+    }
+
     // EXIF-Tag 274. Wo die IFD haengt, entscheidet der Container: JPEG und HEIF
     // legen sie in den APP1-Block, TIFF hat sie unmittelbar. Beide Pfade werden
     // versucht, statt den Containertyp abzufragen -- ein fehlender Pfad kostet
@@ -52,7 +115,16 @@ bool ImageDocument::Open(IWICImagingFactory* factory, const std::wstring& path, 
         path.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, &decoder);
     if (FAILED(hr))
     {
-        error = L"Datei konnte nicht geoeffnet werden.\n\n" + FormatHResult(hr);
+        error = L"Datei konnte nicht geoeffnet werden.\n\n";
+
+        // Nur bei diesem einen Code steht fest, dass der Decoder eingetragen
+        // ist und allein seine Umsetzung fehlt. WINCODEC_ERR_COMPONENTNOTFOUND
+        // sieht aehnlich aus, heisst aber meist, dass die Datei gar kein Bild
+        // ist -- dort waere der Hinweis schlicht falsch.
+        if (hr == WINCODEC_ERR_COMPONENTINITIALIZEFAILURE)
+            error += MissingCodecHint(path) + L"\n\n";
+
+        error += FormatHResult(hr);
         return false;
     }
 

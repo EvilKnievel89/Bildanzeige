@@ -15,7 +15,7 @@ Fenster zeigt das Bild, darunter eine Icon-Leiste für die häufigen Handgriffe.
 | Rendering | Direct2D (`d2d1`) | GPU-Skalierung, saubere Transformationen |
 | COM-Handles | `Microsoft::WRL::ComPtr` (`<wrl/client.h>`) | Teil des SDK |
 
-Keine externen Abhängigkeiten. Ergebnis ist eine einzelne EXE (437 KB, davon
+Keine externen Abhängigkeiten. Ergebnis ist eine einzelne EXE (512 KB, davon
 166 KB Anwendungssymbol), portabel — siehe Abschnitt 8.
 
 ### Verifizierte Umgebung
@@ -37,6 +37,15 @@ Auf dieser Maschine bereits geprüft (Testkompilat gebaut und ausgeführt):
 | JPEG XL | `.jxl` |
 | Raw (Microsoft) | `.cr2 .cr3 .nef .arw .orf .raf .rw2 .dng` u. a. |
 | DDS, WMPhoto/JXR | `.dds .wdp .jxr` |
+
+Vier dieser Einträge sind bloße Anmeldungen. WebP, HEIF/AVIF, Raw und JPEG XL
+führt `windowscodecs.dll` selbst, geliefert werden sie aber von Erweiterungen
+aus dem Microsoft Store: `Microsoft.WebpImageExtension` bringt
+`MSWebp_store.dll` mit und beansprucht im Paketmanifest unter
+`windows.mediaCodec` genau die CLSID `{7693E886-51C9-4070-8419-9F70738EC8FA}`,
+die Windows als „Microsoft Webp Decoder" führt. Fehlt das Paket, bleibt der
+Eintrag stehen und erst das Erzeugen scheitert. Auf dieser Maschine ist JPEG XL
+genau dieser Fall — siehe Abschnitt 7, „Angemeldet ist nicht vorhanden".
 
 ## 2. Bedienoberfläche
 
@@ -653,6 +662,57 @@ Das System kann den angegebenen Pfad nicht finden. (0x80070003)
 Danach läuft die Anwendung weiter, mit leerer Fläche und ohne Maßstab im Titel.
 Das ist der Fall eines abgezogenen Sticks oder einer getrennten Netzfreigabe.
 
+### Angemeldet ist nicht vorhanden
+
+Auf einem Windows Server 2025 scheitert das Öffnen einer WebP-Datei mit
+`WINCODEC_ERR_COMPONENTINITIALIZEFAILURE` (0x88982F8B), während dieselbe Datei
+auf der Entwicklungsmaschine anstandslos aufgeht. Der Code selbst ist der
+Hinweis: nicht „Format unbekannt" (das wäre 0x88982F50), sondern „Decoder
+eingetragen, ließ sich nicht erzeugen". Warum das so kommt, steht in
+Abschnitt 1 — die Umsetzung liegt in einer Store-Erweiterung, und Windows
+Server hat keinen Store. Nachrüsten lässt sie sich; die Anwendung nimmt sie
+dann von selbst an, weil die Endungsliste zur Laufzeit entsteht.
+
+**Nicht gemacht: beim Start aussortieren.** Naheliegend wäre, jeden Decoder
+einmal probeweise zu erzeugen und die unbrauchbaren aus der Endungsliste zu
+werfen. Gemessen, je frischer Prozess, dreimal wiederholt:
+
+| | Aufzählen | mit Probeerzeugung |
+|---|---|---|
+| gesamt | 1,9 ms | 190 ms |
+
+Fast alles davon sind die vier Paket-Codecs (HEIF 83–99 ms, WebP 33, Raw 32,
+JPEG XL 29), und es lädt vier Codec-DLLs in den Prozess, die man womöglich nie
+braucht. Hundertfache Kosten bei jedem Start für einen seltenen Fall — der
+falsche Handel.
+
+**Stattdessen sagt die Meldung, was fehlt.** Bei genau diesem einen Fehlercode
+nennt `ImageDocument::Open` die Erweiterung samt ihrer Kennung im Store:
+
+```
+Datei konnte nicht geoeffnet werden.
+
+Der Decoder fuer ".jxl" ist angemeldet, laesst sich auf diesem Rechner aber
+nicht erzeugen: es fehlt die JPEG XL-Bilderweiterung aus dem Microsoft Store
+(Kennung 9MZPRTH5C0TB). Auf Windows Server sind diese Erweiterungen im
+Auslieferungszustand nicht vorhanden.
+
+Fehler bei der Komponenteninitialisierung. (0x88982F8B)
+```
+
+Nur bei 0x88982F8B. Bei `WINCODEC_ERR_COMPONENTNOTFOUND` ist der häufigere Fall
+eine Datei, die schlicht kein Bild ist; dort wäre derselbe Hinweis falsch.
+
+**Geprüft ohne Server.** Eine 66 Byte große Datei, die mit `FF 0A` beginnt — der
+Signatur eines nackten JPEG-XL-Codestroms —, löst auf dieser Maschine genau
+denselben Fehler aus, weil hier die JPEG-XL-Erweiterung fehlt. Dieselben Bytes
+unter der Endung `.bild` ergeben den allgemeinen Hinweis: den Decoder wählt WIC
+nach dem Inhalt, den Namen der Erweiterung nennt die Meldung nach der Endung,
+und beides ist voneinander unabhängig. Dieselbe Datei im ISOBMFF-Rahmen
+(`00 00 00 0C "JXL " 0D 0A 87 0A`) ergibt dagegen 0x88982F50 und **keinen**
+Hinweis — diese Signatur beansprucht der Decoder gar nicht erst. Das ist
+zugleich die Gegenprobe darauf, dass der Hinweis nicht zu breit greift.
+
 ## 8. Symbol, Versionsangaben und Auslieferung
 
 ### Das Anwendungssymbol
@@ -766,13 +826,13 @@ cmake --preset msvc-x64
 cmake --build --preset release
 ```
 
-Ergebnis ist **eine Datei**, 437 248 Byte, davon 166 KB Symbol. Sie braucht
+Ergebnis ist **eine Datei**, 523 776 Byte, davon 166 KB Symbol. Sie braucht
 kein Redistributable: die CRT ist statisch eingebunden, und im Importverzeichnis
 stehen nur Systembibliotheken.
 
 | | |
 |---|---|
-| Eingetragene DLLs | `d2d1`, `ole32`, `shlwapi`, `shell32`, `user32`, `comctl32`, `kernel32` |
+| Eingetragene DLLs | `d2d1`, `ole32`, `shlwapi`, `shell32`, `user32`, `comctl32`, `comdlg32`, `gdi32`, `winspool.drv`, `kernel32` |
 | Laufzeit-DLLs | keine |
 | Kennzeichen | High Entropy VA, Dynamic Base, NX, Terminal Server Aware |
 | Sprungprüfung | Guard Flags `10017500`, CF instrumented |

@@ -27,7 +27,7 @@ $src = Join-Path $wurzel "src"
 # dann die einzelnen Befunde.
 $pruefungen = @(
     @{ Name = "umgebung";     Frage = "Sind Direct2D und WIC da?";                Args = @() },
-    @{ Name = "decoder";      Frage = "Welche Formate kann dieser Rechner?";      Args = @() },
+    @{ Name = "decoder";      Frage = "Welche Formate kann dieser Rechner wirklich?"; Args = @() },
     @{ Name = "pixelformate"; Frage = "Womit kommen die Bilder herein?";
        Args = @("$testdata\fax.tif", "$testdata\mehrseitig.tif") },
     @{ Name = "gifdaten";     Frage = "Was steht in einem GIF, und als welcher Typ?";

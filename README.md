@@ -19,9 +19,10 @@ cmake --build --preset release
 ```
 
 Ergebnis: `build\Release\Bildanzeige.exe` — eine einzelne, portable EXE von
-496 KB. Sie braucht kein Redistributable: die CRT ist statisch eingebunden, und
+512 KB. Sie braucht kein Redistributable: die CRT ist statisch eingebunden, und
 importiert werden nur Systembibliotheken (`d2d1`, `ole32`, `shlwapi`,
-`shell32`, `user32`, `comctl32`, `comdlg32`, `gdi32`, `kernel32`).
+`shell32`, `user32`, `comctl32`, `comdlg32`, `gdi32`, `winspool.drv`,
+`kernel32`).
 Anwendungssymbol, Manifest und Versionsangaben stecken darin; kopieren genügt,
 installiert wird nichts.
 
@@ -67,6 +68,16 @@ zählen, richtet sich nach den auf dem Rechner vorhandenen Decodern; ein
 nachinstalliertes Format erscheint dadurch von selbst mit in der Reihe. Die
 Ordnerliste entsteht beim Öffnen: eine inzwischen gelöschte Datei wird beim
 Weiterblättern stillschweigend übergangen.
+
+**WebP, HEIC, AVIF und JPEG XL sind ein Sonderfall.** Windows meldet diese
+Decoder zwar selbst an, liefert sie aber nicht mit — sie stecken in
+Erweiterungen aus dem Microsoft Store. Fehlt eine, lässt sich die Datei nicht
+öffnen, obwohl das Format in der Liste steht. Auf Windows Server gibt es keinen
+Store, dort fehlen sie im Auslieferungszustand alle. Die Meldung sagt in diesem
+Fall, welche Erweiterung gemeint ist und unter welcher Kennung sie im Store
+steht; nachinstalliert wird sie sofort mitbenutzt. Welche Decoder auf einem
+Rechner nicht nur eingetragen, sondern auch brauchbar sind, beantwortet
+`tools\pruefungen\pruefen.ps1 -Nur decoder`.
 
 Fotos mit EXIF-Vermerk zur Orientierung werden von sich aus richtig herum
 gezeigt. Diese Lage ist der Ausgangspunkt, auf den ein späteres Drehen von Hand
@@ -128,7 +139,7 @@ bedeutet also weiterhin, was in der Datei steht.
 
 ## Stand
 
-**Version 1.2.0**, alle zehn Meilensteine abgeschlossen — Fenster,
+**Version 1.2.1**, alle zehn Meilensteine abgeschlossen — Fenster,
 Direct2D-Darstellung, Datei per Kommandozeile, Multi-Frame-Dekodierung,
 Seitenwechsel, Icon-Leiste, Rotation, Zoom, Verschieben, Einpassen und
 Originalgröße, GIF-Animation, Ordnernavigation, Drag & Drop,

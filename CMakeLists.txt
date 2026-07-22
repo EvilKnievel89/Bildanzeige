@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21)
 
 # Diese Nummer ist die einzige Stelle, an der die Version steht. Die
 # Ressourcendatei bekommt sie ueber res/Version.h.in zugereicht.
-project(Bildanzeige VERSION 1.2.0 LANGUAGES CXX RC)
+project(Bildanzeige VERSION 1.2.1 LANGUAGES CXX RC)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
