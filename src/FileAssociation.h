@@ -11,6 +11,7 @@ struct FileType
     const wchar_t* extension;   // klein geschrieben, mit Punkt
     const wchar_t* name;        // steht im Explorer in der Spalte "Typ"
     bool standard;              // gehört zum Satz, den /registrieren einträgt
+    bool store;                 // Decoder kommt aus einer Erweiterung des Store
 };
 
 // Wohin die Einträge gehen. Das ist nichts, was der Benutzer im Fenster wählt:
@@ -24,6 +25,15 @@ enum class RegistryScope
 
 // Die Formate, für die sich die Anwendung eintragen kann.
 const std::vector<FileType>& FileTypes();
+
+// Lässt sich der Decoder für diese Endung auf diesem Rechner wirklich erzeugen?
+//
+// Angemeldet heißt nicht vorhanden: WebP, HEIF, AVIF und JPEG XL meldet Windows
+// selbst an, geliefert werden sie aber von Erweiterungen aus dem Microsoft
+// Store. Die Frage beantwortet allein der Versuch. Er lädt die Codec-DLL und
+// kostet Zeit, das Ergebnis wird deshalb gemerkt; aufgerufen wird nur aus dem
+// UI-Thread.
+bool CanDecode(const std::wstring& extension);
 
 // Der Zweig, in den dieser Lauf schreiben darf.
 RegistryScope ProcessScope();

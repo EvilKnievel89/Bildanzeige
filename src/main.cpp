@@ -31,7 +31,11 @@ namespace
         {
             for (const FileType& type : FileTypes())
             {
-                if (type.standard)
+                // Dieselbe Regel wie beim Vorhaken im Fenster: was der Rechner
+                // nicht dekodieren kann, wird auch nicht zugeordnet. Wird die
+                // Erweiterung später nachinstalliert, holt ein zweiter Aufruf
+                // von /registrieren das Format nach.
+                if (type.standard && (!type.store || CanDecode(type.extension)))
                     wanted.emplace_back(type.extension);
             }
         }

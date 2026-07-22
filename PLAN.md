@@ -15,7 +15,7 @@ Fenster zeigt das Bild, darunter eine Icon-Leiste für die häufigen Handgriffe.
 | Rendering | Direct2D (`d2d1`) | GPU-Skalierung, saubere Transformationen |
 | COM-Handles | `Microsoft::WRL::ComPtr` (`<wrl/client.h>`) | Teil des SDK |
 
-Keine externen Abhängigkeiten. Ergebnis ist eine einzelne EXE (544 KB, davon
+Keine externen Abhängigkeiten. Ergebnis ist eine einzelne EXE (552 KB, davon
 166 KB Anwendungssymbol), portabel — siehe Abschnitt 8.
 
 ### Verifizierte Umgebung
@@ -716,6 +716,12 @@ JPEG XL 29), und es lädt vier Codec-DLLs in den Prozess, die man womöglich nie
 braucht. Hundertfache Kosten bei jedem Start für einen seltenen Fall — der
 falsche Handel.
 
+An einer Stelle wird die Probeerzeugung dann doch gebraucht, und dort geht die
+Rechnung anders auf: die Dateizuordnungen dürfen sich für ein Format nicht
+eintragen, das der Rechner gar nicht öffnen kann. Sie fragen deshalb genau
+dann, wenn ihr Fenster aufgeht, und nur nach den fünf Formaten aus dem Store —
+einmal je Lauf statt bei jedem Start (Abschnitt 10).
+
 **Stattdessen sagt die Meldung, was fehlt.** Bei genau diesem einen Fehlercode
 nennt `ImageDocument::Open` die Erweiterung samt ihrer Kennung im Store:
 
@@ -856,7 +862,7 @@ cmake --preset msvc-x64
 cmake --build --preset release
 ```
 
-Ergebnis ist **eine Datei**, 557 568 Byte, davon 166 KB Symbol. Sie braucht
+Ergebnis ist **eine Datei**, 565 760 Byte, davon 166 KB Symbol. Sie braucht
 kein Redistributable: die CRT ist statisch eingebunden, und im Importverzeichnis
 stehen nur Systembibliotheken.
 
@@ -1212,22 +1218,50 @@ wer es nicht liest, sucht den Grund sonst vergebens im eigenen Zweig.
 
 ### Welche Endungen zur Wahl stehen
 
-Dieselben elf, die `FolderNavigator` als Notnagel führt: `.bmp`, `.dib`,
-`.gif`, `.ico`, `.jfif`, `.jpe`, `.jpeg`, `.jpg`, `.png`, `.tif`, `.tiff` —
-die Formate, die jede Windows-Installation von sich aus dekodiert.
+Sechzehn, in zwei Gruppen. Elf dekodiert jede Windows-Installation von sich
+aus — `.bmp`, `.dib`, `.gif`, `.ico`, `.jfif`, `.jpe`, `.jpeg`, `.jpg`,
+`.png`, `.tif`, `.tiff`, dieselben, die `FolderNavigator` als Notnagel führt.
+Fünf kommen aus einer Erweiterung des Microsoft Store: `.avif`, `.heic`,
+`.heif`, `.jxl`, `.webp`.
 
-WebP, HEIC, AVIF und JPEG XL stehen mit Bedacht nicht darin, obwohl die
-Anwendung sie anzeigt, sobald der Rechner sie kann. Ihre Decoder sind
-angemeldet, stecken aber in Erweiterungen aus dem Store (Abschnitt 7). Sich für
-ein Format einzutragen, das auf diesem Rechner vielleicht gar nicht zu öffnen
-ist, hieße dem Benutzer eine Zuordnung anzubieten, die im Fehlertext endet.
-Hier ist die Liste aus dem Code der ehrlichere Weg als die aus den angemeldeten
-Decodern — anders als beim Blättern im Ordner, wo ein nachinstalliertes Format
-von selbst mitkommen soll.
+Die zweite Gruppe ist der heikle Fall, denn angemeldet ist nicht vorhanden
+(Abschnitt 7). Ein Eintrag für ein Format, dessen Erweiterung fehlt, wäre eine
+Zuordnung, die im Fehlertext endet — der Doppelklick öffnet dann zwar die
+Bildanzeige, aber nur, damit sie sagt, was zu installieren ist.
 
-`.ico` ist als einziges nicht vorgehakt: ein Symbol ist eher Zubehör eines
-Programms als ein Bild, das man betrachtet. Anzeigen lässt es sich trotzdem,
-und wer es zuordnen will, hakt es an.
+**Gefragt wird deshalb, bevor vorgehakt wird**, und zwar auf demselben Weg, den
+`tools\pruefungen\decoder.cpp` geht: den Decoder einmal probeweise erzeugen.
+Gelingt es, steht das Format wie jedes andere da; gelingt es nicht, steht
+hinter der Endung „(Erweiterung fehlt)", und der Haken bleibt aus.
+`/registrieren` hält sich an dieselbe Regel und überspringt, was der Rechner
+nicht kann; ein zweiter Aufruf nach dem Nachinstallieren holt das Format nach.
+
+Das Kästchen bleibt trotzdem bedienbar. Wer die Erweiterung gleich
+nachinstalliert, soll die Zuordnung schon jetzt treffen können, und wer bereits
+eingetragen ist, muss sie auch wieder loswerden können — ein graues Kästchen
+wäre für den zweiten Fall eine Falle.
+
+Die Probe kostet, was sie in Abschnitt 7 gekostet hat: sie lädt die
+Codec-DLLs. Gemessen vom Befehl bis zum stehenden Fenster, fünf Läufe je
+frischer Prozess, **300 ms beim ersten Öffnen gegen 65 ms beim zweiten** — die
+Differenz von rund einer Viertelsekunde ist die Probe, und sie fällt einmal je
+Lauf an, weil der Befund gemerkt wird. Beim Start wäre dieser Preis der
+falsche Handel gewesen und ist dort auch nie eingebaut worden (Abschnitt 7);
+für ein Fenster, das man einmal im Jahr öffnet, ist er es nicht.
+
+Eines beantwortet die Probe nicht: `.avif` braucht neben der
+HEIF-Bilderweiterung noch die AV1-Videoerweiterung. Der Decoder lässt sich
+schon mit der ersten erzeugen, das Bild bleibt ohne die zweite trotzdem aus.
+Das zeigt sich erst an der Datei — mit der Meldung aus Abschnitt 7, die beide
+Kennungen nennt.
+
+Zu jedem Store-Format gibt es mehr Endungen als die genannten (`.hif`,
+`.avci`, `.heics`, `.avifs` …). Aufgenommen sind die, die einem begegnen; die
+Anwendung *zeigt* die übrigen weiterhin an, sie stehen nur nicht zur Zuordnung.
+
+`.ico` ist als einziges vorhandenes Format nicht vorgehakt: ein Symbol ist eher
+Zubehör eines Programms als ein Bild, das man betrachtet. Anzeigen lässt es
+sich trotzdem, und wer es zuordnen will, hakt es an.
 
 ### Der Weg dorthin
 
@@ -1299,6 +1333,7 @@ Auf Windows 11 (26200), gewöhnlich gestartet, mit
 | `/abmelden` | Rückgabewert 0; keine ProgId, kein `Software\Bildanzeige`, kein `Applications`-Zweig, kein Wert in `RegisteredApplications` |
 | fremde Einträge danach | `.jpg`, `.png`, `.tiff`, `.dib`, `.jpe`\`…\OpenWithProgids` stehen unverändert mit dem Eintrag der Fotos-App darin |
 | dasselbe erhöht gestartet | derselbe Baum unter `HKEY_LOCAL_MACHINE`; ein nicht erhöhter Lauf davor und danach lässt ihn unangetastet und schreibt allein nach `HKEY_CURRENT_USER` |
+| Formate aus dem Store | auf dieser Maschine sind HEIF und WebP erzeugbar, JPEG XL nicht (`pruefen.ps1 -Nur decoder`). Genau so steht es im Fenster: `.avif`, `.heic`, `.heif` und `.webp` vorgehakt, `.jxl` mit „(Erweiterung fehlt)" und ohne Haken. `/registrieren` und „Übernehmen" schreiben beide 14 Endungen — die elf vorhandenen ohne `.ico`, dazu die vier brauchbaren aus dem Store |
 
 Nachgestellt ist auch der ganze Weg bis zum Standard: nach der Registrierung
 ließ sich die Bildanzeige in den Einstellungen für `.bmp` und `.jpg` als

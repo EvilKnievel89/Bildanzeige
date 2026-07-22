@@ -19,7 +19,7 @@ cmake --build --preset release
 ```
 
 Ergebnis: `build\Release\Bildanzeige.exe` — eine einzelne, portable EXE von
-544 KB. Sie braucht kein Redistributable: die CRT ist statisch eingebunden, und
+552 KB. Sie braucht kein Redistributable: die CRT ist statisch eingebunden, und
 importiert werden nur Systembibliotheken (`d2d1`, `ole32`, `shlwapi`,
 `shell32`, `user32`, `comctl32`, `comdlg32`, `gdi32`, `winspool.drv`,
 `advapi32`, `kernel32`).
@@ -157,10 +157,18 @@ festlegen …" führt deshalb auf direktem Weg zur richtigen Seite der
 Einstellungen. Wer die Bildanzeige später abmeldet und für eine Endung ihr
 Standard war, wird von Windows beim nächsten Doppelklick wieder gefragt.
 
-WebP, HEIC, AVIF und JPEG XL stehen nicht zur Wahl, obwohl die Anwendung sie
-anzeigt, sobald der Rechner sie kann: ihre Decoder stecken in Erweiterungen aus
-dem Store, und eine Zuordnung für ein Format, das sich hier vielleicht gar
-nicht öffnen lässt, wäre ein Versprechen auf einen Fehlertext.
+Zur Wahl stehen sechzehn Endungen: die elf, die jede Windows-Installation von
+sich aus dekodiert (`.bmp`, `.dib`, `.gif`, `.ico`, `.jfif`, `.jpe`, `.jpeg`,
+`.jpg`, `.png`, `.tif`, `.tiff`), und die modernen Formate `.avif`, `.heic`,
+`.heif`, `.jxl` und `.webp`. Deren Decoder kommen aus Erweiterungen des
+Microsoft Store, und angemeldet heißt bei ihnen nicht vorhanden — die
+Bildanzeige erzeugt sie deshalb beim Öffnen des Fensters einmal probeweise.
+Was sich erzeugen lässt, ist vorgehakt; hinter dem Rest steht „(Erweiterung
+fehlt)", und er bleibt ungehakt, damit die Anwendung sich kein Format an sich
+zieht, das sie hier nur mit einer Fehlermeldung beantworten könnte. Ankreuzen
+lässt er sich trotzdem, und nach dem Nachinstallieren genügt ein erneutes
+`Übernehmen` bzw. `/registrieren`. Das erste Öffnen des Fensters kostet die
+Probe rund eine Viertelsekunde, danach steht der Befund für diesen Lauf fest.
 
 Im Vollbild bleibt die Icon-Leiste stehen. Ohne Rahmen und Menü ist sie der
 einzige sichtbare Rückweg, und vierzig Punkte am unteren Rand kosten auf einem
@@ -180,7 +188,7 @@ bedeutet also weiterhin, was in der Datei steht.
 
 ## Stand
 
-**Version 1.3.0**, alle elf Meilensteine abgeschlossen — Fenster,
+**Version 1.3.1**, alle elf Meilensteine abgeschlossen — Fenster,
 Direct2D-Darstellung, Datei per Kommandozeile, Multi-Frame-Dekodierung,
 Seitenwechsel, Icon-Leiste, Rotation, Zoom, Verschieben, Einpassen und
 Originalgröße, GIF-Animation, Ordnernavigation, Drag & Drop,

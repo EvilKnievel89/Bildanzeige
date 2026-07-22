@@ -3,8 +3,11 @@
 #include <shellapi.h>
 #include <shlobj.h>     // SHChangeNotify
 #include <shlwapi.h>
+#include <wincodec.h>
 
 #include <algorithm>
+#include <cwctype>
+#include <utility>
 
 // Was hier geschrieben wird und was mit Absicht nicht:
 //
@@ -281,6 +284,61 @@ namespace
         DeleteValue(root, kRegisteredApps, kAppName);
     }
 
+    // Führt dieser Decoder die Endung? Die Liste kommt durch Komma getrennt und
+    // in wechselnder Schreibweise heraus -- ".JXL" steht neben ".webp".
+    bool ListsExtension(IWICBitmapDecoderInfo* info, const std::wstring& extension)
+    {
+        UINT needed = 0;
+        if (FAILED(info->GetFileExtensions(0, nullptr, &needed)) || needed == 0)
+            return false;
+
+        std::wstring list(needed, L'\0');
+        if (FAILED(info->GetFileExtensions(needed, list.data(), &needed)))
+            return false;
+
+        list.resize(wcslen(list.c_str()));
+        for (wchar_t& c : list)
+            c = static_cast<wchar_t>(std::towlower(c));
+
+        // Komma an beiden Enden, damit ".jpe" nicht in ".jpeg" gefunden wird.
+        return (L"," + list + L",").find(L"," + extension + L",") != std::wstring::npos;
+    }
+
+    // Derselbe Weg, den tools\pruefungen\decoder.cpp geht: den Decoder einmal
+    // probeweise erzeugen. Fehlt die Erweiterung aus dem Store, steht ihr
+    // Eintrag trotzdem da, und erst das Erzeugen scheitert -- mit
+    // WINCODEC_ERR_COMPONENTINITIALIZEFAILURE (Abschnitt 7).
+    bool ProbeDecoder(const std::wstring& extension)
+    {
+        ComPtr<IWICImagingFactory> factory;
+        if (FAILED(CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER,
+                                    IID_PPV_ARGS(&factory))))
+        {
+            return false;
+        }
+
+        ComPtr<IEnumUnknown> enumerator;
+        if (FAILED(factory->CreateComponentEnumerator(WICDecoder, WICComponentEnumerateDefault,
+                                                      &enumerator)))
+        {
+            return false;
+        }
+
+        ComPtr<IUnknown> element;
+        ULONG fetched = 0;
+        while (enumerator->Next(1, element.ReleaseAndGetAddressOf(), &fetched) == S_OK &&
+               fetched == 1)
+        {
+            ComPtr<IWICBitmapDecoderInfo> info;
+            if (FAILED(element.As(&info)) || !ListsExtension(info.Get(), extension))
+                continue;
+
+            ComPtr<IWICBitmapDecoder> decoder;
+            return SUCCEEDED(info->CreateInstance(&decoder));
+        }
+        return false;
+    }
+
     bool Launch(const std::wstring& target)
     {
         const INT_PTR result = reinterpret_cast<INT_PTR>(
@@ -291,30 +349,58 @@ namespace
 
 const std::vector<FileType>& FileTypes()
 {
-    // Genau die Formate, die jede Windows-Installation von sich aus dekodiert
-    // -- dieselbe Liste, die FolderNavigator als Notnagel führt. WebP, HEIC,
-    // AVIF und JPEG XL stehen mit Bedacht nicht darin: ihre Decoder sind zwar
-    // angemeldet, stecken aber in Erweiterungen aus dem Store (Abschnitt 7).
-    // Sich für ein Format einzutragen, das auf diesem Rechner vielleicht gar
-    // nicht zu öffnen ist, hieße dem Benutzer eine Zuordnung anzubieten, die
-    // im Fehlertext endet.
+    // Die elf Formate, die jede Windows-Installation von sich aus dekodiert
+    // (dieselben, die FolderNavigator als Notnagel führt), und die fünf, die
+    // aus einer Erweiterung des Microsoft Store kommen. Letztere sind
+    // gekennzeichnet, weil ihr Decoder angemeldet sein kann, ohne vorhanden zu
+    // sein -- gefragt wird deshalb vor dem Vorhaken bei CanDecode, und wo die
+    // Erweiterung fehlt, sagt es die Liste im Fenster.
     //
-    // .ico ist als einziges nicht vorgehakt: ein Symbol ist eher Zubehör eines
-    // Programms als ein Bild, das man betrachtet. Wer es doch will, hakt es an.
+    // .ico ist als einziges vorhandenes nicht vorgehakt: ein Symbol ist eher
+    // Zubehör eines Programms als ein Bild, das man betrachtet. Wer es doch
+    // will, hakt es an.
+    //
+    // Zu jedem Store-Format gibt es mehr Endungen, als hier stehen (.hif,
+    // .avci, .heics, .avifs …). Aufgenommen sind die, die einem tatsächlich
+    // begegnen; die Anwendung zeigt die übrigen weiterhin an, sie stehen nur
+    // nicht zur Zuordnung.
     static const std::vector<FileType> types = {
-        { L".bmp",  L"BMP-Bild",    true  },
-        { L".dib",  L"DIB-Bild",    true  },
-        { L".gif",  L"GIF-Bild",    true  },
-        { L".ico",  L"Symboldatei", false },
-        { L".jfif", L"JPEG-Bild",   true  },
-        { L".jpe",  L"JPEG-Bild",   true  },
-        { L".jpeg", L"JPEG-Bild",   true  },
-        { L".jpg",  L"JPEG-Bild",   true  },
-        { L".png",  L"PNG-Bild",    true  },
-        { L".tif",  L"TIFF-Bild",   true  },
-        { L".tiff", L"TIFF-Bild",   true  },
+        { L".avif", L"AVIF-Bild",    true,  true  },
+        { L".bmp",  L"BMP-Bild",     true,  false },
+        { L".dib",  L"DIB-Bild",     true,  false },
+        { L".gif",  L"GIF-Bild",     true,  false },
+        { L".heic", L"HEIC-Bild",    true,  true  },
+        { L".heif", L"HEIF-Bild",    true,  true  },
+        { L".ico",  L"Symboldatei",  false, false },
+        { L".jfif", L"JPEG-Bild",    true,  false },
+        { L".jpe",  L"JPEG-Bild",    true,  false },
+        { L".jpeg", L"JPEG-Bild",    true,  false },
+        { L".jpg",  L"JPEG-Bild",    true,  false },
+        { L".jxl",  L"JPEG XL-Bild", true,  true  },
+        { L".png",  L"PNG-Bild",     true,  false },
+        { L".tif",  L"TIFF-Bild",    true,  false },
+        { L".tiff", L"TIFF-Bild",    true,  false },
+        { L".webp", L"WebP-Bild",    true,  true  },
     };
     return types;
+}
+
+bool CanDecode(const std::wstring& extension)
+{
+    // Das Ergebnis wird gemerkt: der Versuch lädt die Codec-DLL, und die
+    // Anzeige fragt bei jedem Fensterwechsel neu. Dass eine Erweiterung
+    // während des Laufs nachinstalliert wird, ist der seltenere Fall gegen den
+    // täglichen -- und ein neuer Start zeigt sie dann.
+    static std::vector<std::pair<std::wstring, bool>> known;
+    for (const std::pair<std::wstring, bool>& entry : known)
+    {
+        if (entry.first == extension)
+            return entry.second;
+    }
+
+    const bool usable = ProbeDecoder(extension);
+    known.emplace_back(extension, usable);
+    return usable;
 }
 
 // Gefragt ist nicht, ob der Benutzer Administrator *ist*, sondern ob dieser

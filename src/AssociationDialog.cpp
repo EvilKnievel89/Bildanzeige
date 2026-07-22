@@ -129,15 +129,21 @@ namespace
     // Fensters feststehen muss: gemessen wird der längste Fall, angezeigt der
     // jeweilige. Ein fester Platz von zwei Zeilen ginge nicht -- schon bei
     // 125 % bräche der Satz um und stünde zur Hälfte außerhalb.
-    std::wstring StatusText(size_t registered, bool anyDefault)
+    // Der Zweig steht mit in der Zeile, obwohl er schon im Kopf genannt ist.
+    // Er muss es: hat der andere Zweig Einträge, stünde sonst "nichts
+    // eingetragen" neben einer Liste voller "(Standard)"-Vermerke, und beides
+    // wäre wahr, ohne dass man sähe, wovon die Rede ist.
+    std::wstring StatusText(RegistryScope scope, size_t registered, bool anyDefault)
     {
+        const std::wstring zweig = ScopeKeyName(scope);
+
         std::wstring text;
         if (registered == 0)
-            text = L"Bisher ist nichts eingetragen.";
+            text = L"In " + zweig + L" ist bisher nichts eingetragen.";
         else if (registered == 1)
-            text = L"Eingetragen: eine Endung.";
+            text = L"In " + zweig + L" eingetragen: eine Endung.";
         else
-            text = L"Eingetragen: " + std::to_wstring(registered) + L" Endungen.";
+            text = L"In " + zweig + L" eingetragen: " + std::to_wstring(registered) + L" Endungen.";
 
         text += L"\n";
         text += anyDefault
@@ -147,10 +153,15 @@ namespace
         return text;
     }
 
-    std::wstring LabelFor(const FileType& type, bool isDefault)
+    // Fehlt die Erweiterung, verdrängt dieser Vermerk den anderen: dass die
+    // Anwendung als Standard eingetragen ist, hilft bei einem Format nicht
+    // weiter, das sie auf diesem Rechner gar nicht öffnen kann.
+    std::wstring LabelFor(const FileType& type, bool isDefault, bool missing)
     {
         std::wstring label = std::wstring(type.extension) + L" — " + type.name;
-        if (isDefault)
+        if (missing)
+            label += L"   (Erweiterung fehlt)";
+        else if (isDefault)
             label += L"   (Standard)";
         return label;
     }
@@ -178,10 +189,16 @@ namespace
 
             if (takeChecks)
                 SendMessageW(dialog.boxes[i], BM_SETCHECK, on ? BST_CHECKED : BST_UNCHECKED, 0);
-            SetWindowTextW(dialog.boxes[i], LabelFor(types[i], isDefault).c_str());
+
+            // Das Kästchen bleibt trotz fehlender Erweiterung bedienbar: wer
+            // sie gleich nachinstalliert, soll die Zuordnung schon jetzt
+            // treffen können, und wer bereits eingetragen ist, muss sie auch
+            // wieder loswerden können.
+            const bool missing = types[i].store && !CanDecode(types[i].extension);
+            SetWindowTextW(dialog.boxes[i], LabelFor(types[i], isDefault, missing).c_str());
         }
 
-        SetWindowTextW(dialog.status, StatusText(registered, defaults > 0).c_str());
+        SetWindowTextW(dialog.status, StatusText(dialog.scope, registered, defaults > 0).c_str());
 
         // Ohne Eintrag führt der Weg in die Einstellungen ins Leere: dort steht
         // die Bildanzeige dann gar nicht.
@@ -427,8 +444,8 @@ void ShowAssociationDialog(HWND owner)
     dialog.headerHeight = TextHeight(dialog.font, header, textWidth);
     dialog.lineHeight = TextHeight(dialog.font, L"Ag", textWidth);
     dialog.statusHeight =
-        std::max(TextHeight(dialog.font, StatusText(types.size(), true), textWidth),
-                 TextHeight(dialog.font, StatusText(types.size(), false), textWidth));
+        std::max(TextHeight(dialog.font, StatusText(dialog.scope, types.size(), true), textWidth),
+                 TextHeight(dialog.font, StatusText(dialog.scope, types.size(), false), textWidth));
 
     const int rowHeight = std::max(Scaled(dialog, kRowHeight), dialog.lineHeight);
     const int clientHeight = margin + dialog.headerHeight + gap +
@@ -509,12 +526,17 @@ void ShowAssociationDialog(HWND owner)
     // Steht noch nichts in der Registrierung, sind die gängigen Formate
     // vorgehakt: der übliche Wunsch ist dann ein einziger Klick weit weg. Was
     // dasteht, wird dagegen gezeigt, wie es dasteht.
+    //
+    // Nicht vorgehakt wird, wofür die Erweiterung aus dem Store fehlt. Von
+    // selbst soll die Anwendung kein Format an sich ziehen, das sie hier nur
+    // mit einer Fehlermeldung beantworten könnte.
     if (Refresh(dialog, true) == 0)
     {
         for (size_t i = 0; i < types.size(); ++i)
         {
-            SendMessageW(dialog.boxes[i], BM_SETCHECK,
-                         types[i].standard ? BST_CHECKED : BST_UNCHECKED, 0);
+            const bool wanted =
+                types[i].standard && (!types[i].store || CanDecode(types[i].extension));
+            SendMessageW(dialog.boxes[i], BM_SETCHECK, wanted ? BST_CHECKED : BST_UNCHECKED, 0);
         }
     }
 
