@@ -31,6 +31,10 @@ struct PrintJob
 
     UINT currentPage = 0;       // 0-basiert, die gerade gezeigte Seite
     int rotationQuarters = 0;   // Drehung der Anzeige, Viertel im Uhrzeigersinn
+
+    // Kleine Bilder aufs Blatt vergrößern. Standardmäßig aus: eingepasst wird
+    // nur nach unten. In der Seitenansicht steht dafür ein Kästchen.
+    bool enlargeToFit = false;
 };
 
 // Zeigt den Druckdialog und druckt, was dort gewählt wurde. Läuft im
@@ -58,14 +62,18 @@ constexpr int kPrintDpi = 600;
 // denselben Weg brauchen: die Seitenansicht zeichnet damit in eine Metadatei,
 // und tools/pruefungen/drucken.cpp misst damit nach, was aufs Blatt kommt.
 //
+// enlargeToFit entscheidet über kleine Bilder: ohne die Angabe wird höchstens
+// auf die eigene Größe des Bildes gebracht -- seine Punktzahl, umgerechnet über
+// die Feinheit, die in der Datei steht (Näheres in PLAN.md, Abschnitt 9).
+//
 // maxDpi begrenzt die Feinheit des Zwischenbildes. Die Seitenansicht setzt hier
 // die Feinheit des Bildschirms ein: in Druckauflösung zu rechnen kostete
 // Sekunden und zeigte am Schirm keinen Punkt mehr.
 //
 // placement nimmt auf Wunsch das errechnete Rechteck auf und darf nullptr sein.
 bool PrintPageToDC(HDC dc, IWICImagingFactory* wic, IWICBitmapSource* source,
-                   int rotationQuarters, int maxDpi, PrintPlacement* placement,
-                   std::wstring& error);
+                   int rotationQuarters, bool enlargeToFit, int maxDpi,
+                   PrintPlacement* placement, std::wstring& error);
 
 // Rahmen für eine Metadatei, die eine mit PrintPageToDC gezeichnete Seite
 // aufnehmen soll: der bedruckbare Bereich des Geräts, in Hundertstelmillimetern.

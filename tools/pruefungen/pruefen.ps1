@@ -40,7 +40,7 @@ $pruefungen = @(
     # werden soll mit genau der Funktion, die auch druckt, nicht mit einer
     # nachgebauten. Sie legt PDFs an und braucht deshalb ein Arbeitsverzeichnis.
     @{ Name = "drucken";      Frage = "Was kommt beim Drucken heraus?";
-       Args = @("$testdata\gross.png", "$testdata\mehrseitig.tif")
+       Args = @("$testdata\gross.png", "$testdata\klein.png", "$testdata\mehrseitig.tif")
        Quellen = @("Printer.cpp", "ImageDocument.cpp", "Common.cpp")
        Libs = @("comdlg32.lib", "winspool.lib", "gdi32.lib", "user32.lib", "shlwapi.lib") }
 )

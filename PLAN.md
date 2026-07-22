@@ -917,14 +917,31 @@ ImageDocument::LoadFrame   32bppPBGRA -- derselbe Aufruf wie für den Bildschirm
   -> StretchDIBits         auf das Zielrechteck
 ```
 
-### Eingepasst und auf dem Blatt zentriert
+### Eingepasst wird nur nach unten, zentriert auf dem Blatt
 
-Das Bild wird unter Wahrung des Seitenverhältnisses in den bedruckbaren Bereich
-eingepasst — kleine Bilder also auch vergrößert. Auf Papier gibt es kein
-sinnvolles „100 %": der Maßstab des Bildschirms entspricht dort nichts.
+Was größer ist als der bedruckbare Bereich, wird unter Wahrung des
+Seitenverhältnisses hineingepasst. Was kleiner ist, bleibt klein. Ein Passbild
+gehört nicht über A4 gezogen, bloß weil A4 im Gerät liegt: über die eigene
+Größe hinaus vergrößert, gewinnt ein Bild nichts als Unschärfe, und wer ein
+Vorschaubild ausdruckt, will es meist als Vorschaubild. Wer es doch anders
+will, hakt in der Seitenansicht **Kleine Bilder vergrößern** an; dann wird wie
+zuvor in beide Richtungen eingepasst.
 
-Zentriert wird dann aber auf dem **Blatt**, nicht im bedruckbaren Bereich. Der
-ist bei den meisten Geräten unsymmetrisch — nachgemessen mit `drucken.exe`:
+Die eigene Größe ist dabei nicht die Punktzahl, sondern die Feinheit, die in
+der Datei steht: 120 × 80 Punkte mit 96 dpi sind gut drei mal zwei Zentimeter
+und werden auf einem Gerät mit 600 dpi zu 750 × 500 Gerätepunkten. Ein Scan mit
+300 dpi kommt dadurch so groß heraus, wie er eingelesen wurde — das ist das
+„100 %" des Papiers, und anders als der Maßstab des Bildschirms bedeutet es
+dort etwas. Fehlt die Angabe oder ist sie unsinnig, gelten 96 dpi: dieselbe
+Annahme, die auch WIC trifft. Sind die Werte der beiden Achsen verschieden —
+selten, aber es gibt sie, etwa Fax-TIFFs mit 204 × 196 dpi —, gilt der
+kleinere. Das Bild soll auf keiner Achse über seine Größe hinauswachsen, und
+die Punkte quadratisch zu halten heißt, es so aufs Blatt zu legen, wie die
+Anzeige es zeigt.
+
+Zentriert wird in beiden Fällen auf dem **Blatt**, nicht im bedruckbaren
+Bereich. Der ist bei den meisten Geräten unsymmetrisch — nachgemessen mit
+`drucken.exe`:
 
 | Drucker | Blatt | bedruckbar | Rand links/oben | rechts/unten |
 |---|---|---|---|---|
@@ -1034,6 +1051,15 @@ zu diesem Zeitpunkt hat noch niemand einen gewählt — und sein Name steht im
 Fenstertitel, damit nicht im Verborgenen bleibt, worauf sich die Ansicht
 bezieht. Wer im Druckdialog danach ein anderes Gerät nimmt, bekommt dessen Blatt.
 
+Das Kästchen **Kleine Bilder vergrößern** steht in der Leiste dieser Ansicht
+und nirgends sonst. Der übliche Platz für eine solche Angabe wäre der
+Druckdialog, aber der gehört unter Windows 11 der Anwendung nicht mehr; und
+eine Angabe, deren Wirkung zu sehen ist, gehört ohnehin dorthin, wo man sie
+sieht. Ein Haken zeichnet die Seite neu auf — dieselbe Arbeit wie ein
+Seitenwechsel, also auch dieselbe Sanduhr. Beim Schließen ist er wieder fort:
+Vergrößern ist die Ausnahme, und eine Ausnahme, die sich merkt, wird zur
+stillen Regel.
+
 Gezeichnet wird mit **150 dpi**, nicht mit den 600 des Druckers: bei A4 sind das
 rund 1240 × 1754 Punkte und damit mehr, als jedes Fenster zeigen kann, während
 die Druckauflösung bei einem großen Scan Sekunden kostete. Feste Zahl statt
@@ -1062,16 +1088,25 @@ Prüfung besteht seither auf einem unbemalten Rest.
 
 `tools\pruefungen\pruefen.ps1 -Nur drucken` schickt echte Aufträge durch
 `PrintPageToDC`, dieselbe Funktion, die auch die Anwendung aufruft, und prüft
-je Seite vier Dinge: Seitenverhältnis erhalten, eine Kante
-stößt an den Rand (also wirklich eingepasst), vollständig im bedruckbaren
-Bereich, Mitte des Bildes auf der Mitte des Blattes. Alle Seiten von
-`gross.png` und `mehrseitig.tif`, letztere um 90 Grad gedreht, bestehen.
+je Seite fünf Dinge: Seitenverhältnis erhalten, der Maßstab ist der erwartete
+(eingepasst, aber höchstens auf die eigene Größe), eine Kante stößt an den Rand
+oder ringsum bleibt Rand — je nachdem, welche der beiden Grenzen gegriffen hat
+—, vollständig im bedruckbaren Bereich, Mitte des Bildes auf der Mitte des
+Blattes. Jede Datei läuft zweimal durch, mit und ohne Vergrößerung. Alle Seiten
+von `gross.png`, `klein.png` und `mehrseitig.tif`, letztere um 90 Grad gedreht,
+bestehen.
+
+`klein.png` ist der Fall, um den es geht: 120 × 80 Punkte mit 96 dpi kommen auf
+„Microsoft Print to PDF" (600 dpi, A4) als 750 × 500 Gerätepunkte mitten aufs
+Blatt — mit dem Haken dagegen als 4961 × 3307, also über die ganze Breite.
 
 Der weiße Grund ist der Fall, den man nicht sieht, wenn man nur ins PDF schaut.
 Geprüft wird er über eine Metadatei mit dem Drucker als Bezugsgerät —
 `PrintPageToDC` rechnet also mit den echten Maßen —, die hinterher in eine
 Bitmap mit magentafarbenem Grund zurückgespielt wird. Eine zur Hälfte
-durchsichtige Vorlage von 200 × 100 Punkten ergibt auf A4:
+durchsichtige Vorlage von 200 × 100 Punkten — mit Vergrößerung gezeichnet, denn
+in ihrer eigenen Größe wäre sie auf dem Blatt eine Briefmarke, in der sich
+schlecht Punkte zählen lassen — ergibt auf A4:
 
 | | Punkte |
 |---|---|

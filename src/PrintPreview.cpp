@@ -32,18 +32,21 @@ namespace
     constexpr int kStepButton = 32;
     constexpr int kWideButton = 108;
     constexpr int kPageTextWidth = 96;
+    constexpr int kCheckWidth = 184;
     constexpr int kGap = 4;
 
     constexpr int kIdPrevious = 1001;
     constexpr int kIdNext = 1002;
     constexpr int kIdPrint = 1003;
     constexpr int kIdClose = 1004;
+    constexpr int kIdEnlarge = 1005;
 
     struct Preview
     {
         HWND hwnd = nullptr;
         HWND previous = nullptr;
         HWND next = nullptr;
+        HWND enlargeBox = nullptr;
         HWND print = nullptr;
         HWND close = nullptr;
         HFONT font = nullptr;
@@ -58,6 +61,7 @@ namespace
 
         UINT pageIndex = 0;
         UINT pageCount = 1;
+        bool enlargeToFit = false;   // Stand des Kästchens
 
         int sheetWidth = 0;      // Blatt in Punkten des Geräts
         int sheetHeight = 0;
@@ -122,8 +126,8 @@ namespace
         }
 
         const bool drawn = PrintPageToDC(meta, preview.wic, source.Get(),
-                                         preview.job->rotationQuarters, kPreviewDpi, nullptr,
-                                         preview.pageError);
+                                         preview.job->rotationQuarters, preview.enlargeToFit,
+                                         kPreviewDpi, nullptr, preview.pageError);
         HENHMETAFILE recorded = CloseEnhMetaFile(meta);
         if (!drawn || recorded == nullptr)
         {
@@ -271,8 +275,25 @@ namespace
         MoveWindow(preview.previous, margin, y, step, height, TRUE);
         MoveWindow(preview.next, margin + step + 2 * gap + Scaled(preview, kPageTextWidth), y, step,
                    height, TRUE);
-        MoveWindow(preview.print, client.right - margin - 2 * wide - gap, y, wide, height, TRUE);
+
+        const int printLeft = client.right - margin - 2 * wide - gap;
+        MoveWindow(preview.print, printLeft, y, wide, height, TRUE);
         MoveWindow(preview.close, client.right - margin - wide, y, wide, height, TRUE);
+
+        // Das Kästchen sitzt hinter den Schrittknöpfen -- und bei einer
+        // einzelnen Seite, wo die fortbleiben, an deren Stelle. Was zwischen
+        // ihm und "Drucken …" nicht mehr an Platz ist, nimmt es sich auch
+        // nicht: bei einem schmal gezogenen Fenster bleibt es lieber
+        // abgeschnitten, als unter den Knöpfen zu liegen.
+        if (preview.enlargeBox != nullptr)
+        {
+            const int left =
+                margin + (preview.pageCount > 1
+                              ? 2 * step + 4 * gap + Scaled(preview, kPageTextWidth)
+                              : 0);
+            const int room = std::min(Scaled(preview, kCheckWidth), printLeft - gap - left);
+            MoveWindow(preview.enlargeBox, left, y, std::max(0, room), height, TRUE);
+        }
     }
 
     void GoToPage(Preview& preview, int delta)
@@ -310,6 +331,22 @@ namespace
             GoToPage(preview, +1);
             break;
 
+        case kIdEnlarge:
+        {
+            // Der Knopf schaltet sich selbst um (BS_AUTOCHECKBOX); hier ist nur
+            // abzulesen, wie er jetzt steht, und die Seite neu aufzuzeichnen --
+            // dieselbe Arbeit wie bei einem Seitenwechsel, also auch dieselbe
+            // Sanduhr.
+            preview.enlargeToFit =
+                SendMessageW(preview.enlargeBox, BM_GETCHECK, 0, 0) == BST_CHECKED;
+
+            const HCURSOR busy = SetCursor(LoadCursorW(nullptr, IDC_WAIT));
+            RecordPage(preview);
+            SetCursor(busy);
+            InvalidateRect(preview.hwnd, nullptr, FALSE);
+            break;
+        }
+
         case kIdPrint:
         {
             // Besitzer des Druckdialogs ist die Ansicht, nicht das Hauptfenster:
@@ -319,6 +356,7 @@ namespace
             // Auftrag -- wer bis Seite 3 geblättert hat, meint diese.
             PrintJob started = *preview.job;
             started.currentPage = preview.pageIndex;
+            started.enlargeToFit = preview.enlargeToFit;
             preview.outcome = PrintImage(preview.hwnd, preview.wic, started, *preview.error);
             if (preview.outcome != PrintOutcome::Cancelled)
                 preview.running = false;
@@ -415,6 +453,15 @@ namespace
             // Eingabetaste von selbst fände -- sie wird deshalb von Hand auf
             // den Knopf gelegt, der gerade den Fokus hat.
             const HWND focus = GetFocus();
+            if (focus == preview.enlargeBox)
+            {
+                // Ein Kästchen hat keinen Befehl, den die Eingabetaste
+                // auslösen könnte; sie schaltet es deshalb um, wie es die
+                // Leertaste ohnehin tut.
+                SendMessageW(preview.enlargeBox, BM_CLICK, 0, 0);
+                return true;
+            }
+
             int id = kIdPrint;
             if (focus == preview.close)
                 id = kIdClose;
@@ -448,6 +495,7 @@ PrintOutcome ShowPrintPreview(HWND owner, IWICImagingFactory* wic, const PrintJo
     preview.printer = DefaultPrinter();
     preview.pageCount = job.composed != nullptr ? 1u : job.document->FrameCount();
     preview.pageIndex = job.currentPage < preview.pageCount ? job.currentPage : 0;
+    preview.enlargeToFit = job.enlargeToFit;
 
     if (preview.printer.empty())
     {
@@ -556,6 +604,7 @@ PrintOutcome ShowPrintPreview(HWND owner, IWICImagingFactory* wic, const PrintJo
     const ButtonSpec specs[] = {
         { L"‹", kIdPrevious, &preview.previous, 0 },
         { L"›", kIdNext, &preview.next, 0 },
+        { L"Kleine Bilder ver&größern", kIdEnlarge, &preview.enlargeBox, BS_AUTOCHECKBOX },
         { L"&Drucken …", kIdPrint, &preview.print, BS_DEFPUSHBUTTON },
         { L"S&chließen", kIdClose, &preview.close, 0 },
     };
@@ -568,6 +617,9 @@ PrintOutcome ShowPrintPreview(HWND owner, IWICImagingFactory* wic, const PrintJo
         if (*spec.target != nullptr)
             SendMessageW(*spec.target, WM_SETFONT, reinterpret_cast<WPARAM>(preview.font), TRUE);
     }
+
+    if (preview.enlargeBox != nullptr && preview.enlargeToFit)
+        SendMessageW(preview.enlargeBox, BM_SETCHECK, BST_CHECKED, 0);
 
     // Bei einer einzelnen Seite gibt es nichts zu blättern; die Schrittknöpfe
     // bleiben fort, statt dauerhaft grau dazustehen -- dieselbe Regel wie in

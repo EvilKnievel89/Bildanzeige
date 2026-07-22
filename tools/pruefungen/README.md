@@ -68,8 +68,11 @@ Funktion, die auch druckt: einen Weg, den man ohne Drucker nicht nachrechnen
 kann, mit einer nachgebauten Fassung zu prüfen wäre wertlos. Drei Befunde. Der
 bedruckbare Bereich ist unsymmetrisch — beim Kyocera 99 Punkte oben und 103
 unten —, weshalb auf dem *Blatt* zentriert wird und nicht darin. Alle Seiten
-von `gross.png` und `mehrseitig.tif`, letztere um 90 Grad gedreht, kommen
-unverzerrt, eingepasst und mittig heraus. Und der Fall, den man im PDF nicht
+von `gross.png`, `klein.png` und `mehrseitig.tif`, letztere um 90 Grad gedreht,
+kommen unverzerrt und mittig heraus — jede Datei zweimal, mit und ohne
+Vergrößerung. `klein.png` zeigt den Unterschied: 120 × 80 Punkte mit 96 dpi
+werden auf A4 zu 750 × 500 Gerätepunkten, angehakt zu 4961 × 3307.
+Und der Fall, den man im PDF nicht
 sieht: eine zur Hälfte durchsichtige Vorlage ergibt **84 600 rote, 84 600 weiße,
 null schwarze und 310 800 unbemalte Punkte** — ohne das Unterlegen mit Weiß käme
 dort Schwarz heraus.

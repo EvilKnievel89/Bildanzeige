@@ -9,6 +9,7 @@
 #include <cmath>
 #include <memory>
 #include <new>
+#include <utility>
 #include <vector>
 
 namespace
@@ -18,12 +19,49 @@ namespace
     // den es geht, passt also darunter.
     constexpr double kMaxRenderPixels = 36'000'000.0;
 
+    // Die eigene Größe des Bildes, ausgedrückt als Punkte des Geräts je
+    // Bildpunkt. Was in der Datei steht, ist eine Angabe in dpi: ein Foto mit
+    // 300 dpi ist zweieinhalb Mal so grob wie ein Gerät mit 600 dpi und kommt
+    // deshalb mit zwei Gerätepunkten je Bildpunkt aufs Blatt.
+    //
+    // Fehlt die Angabe oder ist sie unsinnig, gelten 96 dpi -- dieselbe
+    // Annahme, die WIC selbst trifft, und der Maßstab des Bildschirms.
+    // Ungleiche Werte für die Achsen sind selten und hier nicht darzustellen,
+    // ohne das Seitenverhältnis der Punkte zu verletzen; genommen wird der
+    // kleinere, damit "nicht vergrößern" auf beiden Achsen gilt.
+    //
+    // 0 heißt: keine Grenze, das Gerät gibt nichts her, wonach zu rechnen wäre.
+    double NaturalScale(HDC dc, IWICBitmapSource* source, int quarters)
+    {
+        double imageX = 0.0;
+        double imageY = 0.0;
+        if (source == nullptr || FAILED(source->GetResolution(&imageX, &imageY)))
+            return 0.0;
+        if (!(imageX >= 1.0 && imageX <= 10000.0))
+            imageX = 96.0;
+        if (!(imageY >= 1.0 && imageY <= 10000.0))
+            imageY = 96.0;
+
+        // Nach einer Vierteldrehung ist die Waagerechte des Bildes die
+        // Senkrechte der Datei -- mit ihr wandert auch deren Feinheit.
+        if ((((quarters % 4) + 4) % 4) % 2 != 0)
+            std::swap(imageX, imageY);
+
+        const int deviceX = GetDeviceCaps(dc, LOGPIXELSX);
+        const int deviceY = GetDeviceCaps(dc, LOGPIXELSY);
+        if (deviceX <= 0 || deviceY <= 0)
+            return 0.0;
+        return std::min(deviceX / imageX, deviceY / imageY);
+    }
+
     // Platz des Bildes auf dem Blatt: eingepasst unter Wahrung des
     // Seitenverhältnisses und auf dem *Blatt* zentriert, nicht im bedruckbaren
     // Bereich. Der ist bei den meisten Geräten unsymmetrisch -- unten bleibt
     // für den Einzug mehr Rand. Wer darin zentriert, bekommt ein Bild, das auf
     // dem fertigen Blatt sichtbar zu hoch sitzt.
-    PrintPlacement FitOnSheet(HDC dc, UINT imageWidth, UINT imageHeight)
+    //
+    // maxScale begrenzt die Vergrößerung; 0 hebt die Grenze auf.
+    PrintPlacement FitOnSheet(HDC dc, UINT imageWidth, UINT imageHeight, double maxScale)
     {
         PrintPlacement place;
 
@@ -32,8 +70,13 @@ namespace
         if (areaWidth <= 0 || areaHeight <= 0 || imageWidth == 0 || imageHeight == 0)
             return place;
 
-        const double scale = std::min(static_cast<double>(areaWidth) / imageWidth,
-                                      static_cast<double>(areaHeight) / imageHeight);
+        double scale = std::min(static_cast<double>(areaWidth) / imageWidth,
+                                static_cast<double>(areaHeight) / imageHeight);
+
+        // Verkleinert wird immer, vergrößert nur auf Wunsch: ein Passbild
+        // gehört nicht auf A4 gezogen, bloß weil A4 im Gerät liegt.
+        if (maxScale > 0.0)
+            scale = std::min(scale, maxScale);
         place.width = std::clamp(static_cast<int>(std::lround(imageWidth * scale)), 1, areaWidth);
         place.height = std::clamp(static_cast<int>(std::lround(imageHeight * scale)), 1, areaHeight);
 
@@ -154,7 +197,7 @@ namespace
 }
 
 bool PrintPageToDC(HDC dc, IWICImagingFactory* wic, IWICBitmapSource* source, int rotationQuarters,
-                   int maxDpi, PrintPlacement* placement, std::wstring& error)
+                   bool enlargeToFit, int maxDpi, PrintPlacement* placement, std::wstring& error)
 {
     ComPtr<IWICBitmapSource> turned = Turn(wic, source, rotationQuarters, error);
     if (!turned)
@@ -168,7 +211,13 @@ bool PrintPageToDC(HDC dc, IWICImagingFactory* wic, IWICBitmapSource* source, in
         return false;
     }
 
-    const PrintPlacement place = FitOnSheet(dc, width, height);
+    // Gefragt wird die Quelle, nicht das gedrehte Zwischenbild: der
+    // IWICBitmapFlipRotator reicht die Feinheit unverändert weiter und meldete
+    // nach einer Vierteldrehung die Achsen vertauscht. NaturalScale dreht sie
+    // selbst.
+    const double maxScale = enlargeToFit ? 0.0 : NaturalScale(dc, source, rotationQuarters);
+
+    const PrintPlacement place = FitOnSheet(dc, width, height, maxScale);
     if (placement != nullptr)
         *placement = place;
     if (place.width <= 0 || place.height <= 0)
@@ -429,8 +478,8 @@ PrintOutcome PrintImage(HWND owner, IWICImagingFactory* wic, const PrintJob& job
                     ok = false;
                     break;
                 }
-                if (!PrintPageToDC(dialog.hDC, wic, source.Get(), job.rotationQuarters, kPrintDpi,
-                                   nullptr, error))
+                if (!PrintPageToDC(dialog.hDC, wic, source.Get(), job.rotationQuarters,
+                                   job.enlargeToFit, kPrintDpi, nullptr, error))
                 {
                     ok = false;
                     break;

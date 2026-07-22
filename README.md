@@ -108,10 +108,15 @@ in eine Metadatei statt in den Drucker. Bei mehrseitigen Dateien wird darin mit
 in den Druckdialog. Gerechnet wird mit dem Standarddrucker, und der steht im
 Fenstertitel.
 
-Gedruckt wird die gezeigte Seite, in der Drehung der Anzeige, eingepasst aufs
-Blatt und darauf zentriert. Zoom und Ausschnitt bleiben außen vor — sie sind
-die Lupe, mit der man das Bild betrachtet, nicht das Bild. Eine Animation zählt
-als eine Seite. Während des Druckens steht das Fenster.
+Gedruckt wird die gezeigte Seite, in der Drehung der Anzeige, auf dem Blatt
+zentriert. Eingepasst wird dabei nur nach unten: was größer ist als das Blatt,
+wird verkleinert, was kleiner ist, behält seine eigene Größe. Die ergibt sich
+aus der Feinheit, die in der Datei steht — 120 × 80 Punkte mit 96 dpi sind gut
+drei mal zwei Zentimeter, gleichgültig, wie fein der Drucker ist. Wer kleine
+Bilder doch aufs ganze Blatt bringen will, hakt in der Seitenansicht „Kleine
+Bilder vergrößern" an. Zoom und Ausschnitt bleiben außen vor — sie sind die
+Lupe, mit der man das Bild betrachtet, nicht das Bild. Eine Animation zählt als
+eine Seite. Während des Druckens steht das Fenster.
 
 Windows 11 hat den Druckdialog gegen einen eigenen ausgetauscht. Dessen
 Vorschaufeld bleibt bei jeder Win32-Anwendung leer („Diese App unterstützt
@@ -171,7 +176,7 @@ sämtlich aus [tools/](tools/) — `tools\mktestdaten.ps1` legt sie neu an:
 | Datei | Zweck |
 |---|---|
 | `gross.png` | 3000×2000 — muss verkleinert eingepasst werden |
-| `klein.png` | 120×80 — darf **nicht** hochskaliert werden |
+| `klein.png` | 120×80 — darf **nicht** hochskaliert werden, weder in der Anzeige noch auf dem Blatt |
 | `mehrseitig.tif` | 3 Seiten à 900×600, 400×900, 1400×500 — Fit muss pro Seite rechnen |
 | `fax.tif` | 2 Seiten, 1 bpp CCITT G4 — ohne Formatkonvertierung unsichtbar |
 | `anim.gif` | 3 Frames, Teilrechtecke, Delays 50/25/100 |

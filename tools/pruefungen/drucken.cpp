@@ -11,7 +11,9 @@
 //
 //   1. die Gerätemaße -- Beleg für den unsymmetrischen Rand, um dessen
 //      willen auf dem Blatt zentriert wird und nicht im bedruckbaren Bereich
-//   2. einen echten Auftrag nach PDF: Seitenverhältnis, Lage, Zentrierung
+//   2. einen echten Auftrag nach PDF: Seitenverhältnis, Lage, Zentrierung --
+//      und zwar in beiden Betriebsarten, dem voreingestellten "nur
+//      verkleinern" und dem angehakten "kleine Bilder vergrößern"
 //   3. den weißen Grund: eine halb durchsichtige Vorlage durch denselben
 //      Weg geschickt und hinterher nachgesehen, ob aus dem Durchsichtigen
 //      Weiß geworden ist und nicht Schwarz
@@ -103,13 +105,32 @@ namespace
         }
     }
 
+    // Die eigene Größe des Bildes in Punkten des Geräts je Bildpunkt --
+    // dieselbe Rechnung wie in NaturalScale, hier aber aus den Angaben des
+    // Geräts und der Datei neu aufgestellt statt aus src/Printer.cpp geholt.
+    double EigeneGroesse(HDC dc, IWICBitmapSource* quelle, int drehung)
+    {
+        double bildX = 96.0, bildY = 96.0;
+        if (FAILED(quelle->GetResolution(&bildX, &bildY)))
+            return 0.0;
+        if (!(bildX >= 1.0 && bildX <= 10000.0))
+            bildX = 96.0;
+        if (!(bildY >= 1.0 && bildY <= 10000.0))
+            bildY = 96.0;
+        if ((((drehung % 4) + 4) % 4) % 2 != 0)
+            std::swap(bildX, bildY);
+        return std::min(GetDeviceCaps(dc, LOGPIXELSX) / bildX, GetDeviceCaps(dc, LOGPIXELSY) / bildY);
+    }
+
     // Teil 2: ein echter Auftrag, Seite für Seite nachgemessen.
     void PruefeAuftrag(IWICImagingFactory* wic, const std::wstring& drucker,
-                       const std::wstring& datei, int drehung, const std::wstring& ziel)
+                       const std::wstring& datei, int drehung, bool vergroessern,
+                       const std::wstring& ziel)
     {
         std::wstring kopf = datei;
         if (drehung != 0)
             kopf += L"   (um " + std::to_wstring(drehung * 90) + L" Grad gedreht)";
+        kopf += vergroessern ? L"   [vergrößern]" : L"   [nur verkleinern]";
         wprintf(L"\n  %s\n", kopf.c_str());
 
         std::wstring meldung;
@@ -173,8 +194,8 @@ namespace
 
             StartPage(dc);
             PrintPlacement platz;
-            const bool ok = PrintPageToDC(dc, wic, quelle.Get(), drehung, kPrintDpi, &platz,
-                                          meldung);
+            const bool ok = PrintPageToDC(dc, wic, quelle.Get(), drehung, vergroessern, kPrintDpi,
+                                          &platz, meldung);
             EndPage(dc);
 
             if (!ok)
@@ -192,9 +213,30 @@ namespace
             const double ist = static_cast<double>(platz.width) / platz.height;
             Pruefe(std::fabs(sollte - ist) / sollte < 0.002, L"Seitenverhältnis bleibt erhalten");
 
-            // Es muss ausgefüllt sein: eine Kante berührt den Rand.
-            Pruefe(platz.width == areaW || platz.height == areaH,
-                   L"eingepasst -- eine Kante stößt an den bedruckbaren Rand");
+            // Der Maßstab, der herauskommen muss: einpassen darf nur
+            // verkleinern, solange nicht ausdrücklich vergrößert werden soll.
+            const double einpassen = std::min(static_cast<double>(areaW) / bildW,
+                                              static_cast<double>(areaH) / bildH);
+            const double eigen = EigeneGroesse(dc, quelle.Get(), drehung);
+            const double erwartet = vergroessern ? einpassen : std::min(einpassen, eigen);
+
+            Pruefe(std::abs(platz.width - std::lround(bildW * erwartet)) <= 1 &&
+                       std::abs(platz.height - std::lround(bildH * erwartet)) <= 1,
+                   vergroessern ? L"aufs Blatt eingepasst"
+                                : L"höchstens auf die eigene Größe gebracht");
+
+            if (erwartet >= einpassen)
+            {
+                // Es muss ausgefüllt sein: eine Kante berührt den Rand.
+                Pruefe(platz.width == areaW || platz.height == areaH,
+                       L"eingepasst -- eine Kante stößt an den bedruckbaren Rand");
+            }
+            else
+            {
+                // Zu klein fürs Blatt und nicht aufgeblasen: ringsum Rand.
+                Pruefe(platz.width < areaW && platz.height < areaH,
+                       L"nicht aufgeblasen -- ringsum bleibt Rand");
+            }
 
             Pruefe(platz.x >= 0 && platz.y >= 0 && platz.x + platz.width <= areaW &&
                        platz.y + platz.height <= areaH,
@@ -283,7 +325,10 @@ namespace
         std::wstring meldung;
         ComPtr<IWICBitmapSource> quelle;
         vorlage.As(&quelle);
-        const bool gezeichnet = PrintPageToDC(meta, wic, quelle.Get(), 0, kPrintDpi, nullptr,
+        // Mit Vergrößerung: die Vorlage ist 200 x 100 Punkte groß und käme
+        // sonst als Briefmarke aufs Blatt -- zu wenig Fläche, um darin Weiß
+        // von Schwarz zu zählen.
+        const bool gezeichnet = PrintPageToDC(meta, wic, quelle.Get(), 0, true, kPrintDpi, nullptr,
                                               meldung);
         HENHMETAFILE aufzeichnung = CloseEnhMetaFile(meta);
         DeleteDC(bezug);
@@ -401,8 +446,16 @@ int wmain(int argc, wchar_t** argv)
             // Die letzte Datei wird gedreht gedruckt -- damit läuft auch der
             // Weg durch den IWICBitmapFlipRotator einmal mit.
             const int drehung = (i + 1 == dateien.size()) ? 1 : 0;
-            PruefeAuftrag(wic.Get(), drucker, dateien[i], drehung,
-                          L"drucken-probe-" + std::to_wstring(i) + L".pdf");
+
+            // Jede Datei zweimal: der Unterschied zwischen den Betriebsarten
+            // zeigt sich nur an einem Bild, das kleiner ist als das Blatt.
+            for (int modus = 0; modus < 2; modus++)
+            {
+                const bool vergroessern = modus != 0;
+                PruefeAuftrag(wic.Get(), drucker, dateien[i], drehung, vergroessern,
+                              L"drucken-probe-" + std::to_wstring(i) +
+                                  (vergroessern ? L"-vergroessert" : L"-standard") + L".pdf");
+            }
         }
 
         PruefeWeissenGrund(wic.Get(), drucker);
