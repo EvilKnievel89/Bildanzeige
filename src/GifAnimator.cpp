@@ -4,6 +4,8 @@
 
 #include <algorithm>
 #include <cstring>
+#include <memory>
+#include <new>
 
 namespace
 {
@@ -111,6 +113,13 @@ bool GifAnimator::Load(IWICImagingFactory* factory, const ImageDocument& documen
         if (FAILED(frame->GetSize(&entry.width, &entry.height)))
             return false;
 
+        // Ein Frame oberhalb der Grenze aus kMaxImagePixels: dann kein
+        // Abspielen, sondern Seitenbetrieb -- dort geht jedes Einzelbild durch
+        // den Hintergrund-Thread, und der setzt dieselbe Grenze mit einer
+        // Meldung durch, statt sie stillschweigend zu übergehen.
+        if (static_cast<unsigned long long>(entry.width) * entry.height > kMaxImagePixels)
+            return false;
+
         ComPtr<IWICMetadataQueryReader> meta;
         frame->GetMetadataQueryReader(&meta);
         entry.left = ReadUInt(meta.Get(), L"/imgdesc/Left", 0);
@@ -139,6 +148,11 @@ bool GifAnimator::Load(IWICImagingFactory* factory, const ImageDocument& documen
         canvasHeight = spannedHeight;
     }
     if (canvasWidth == 0 || canvasHeight == 0)
+        return false;
+
+    // Auch die Leinwand ist nur eine Behauptung aus /logscrdesc. Der Rückzug
+    // in den Seitenbetrieb greift hier genauso wie bei einem zu großen Frame.
+    if (static_cast<unsigned long long>(canvasWidth) * canvasHeight > kMaxImagePixels)
         return false;
 
     const size_t bytes =
@@ -300,10 +314,20 @@ bool GifAnimator::DrawFrame(UINT index, std::wstring& error)
     if (!source)
         return false;
 
+    // Die Grenzen aus Load halten die Anforderung klein; scheitert sie auf
+    // einem knappen Rechner trotzdem, wird daraus eine Meldung und kein
+    // unbehandeltes bad_alloc, das das Programm über std::terminate risse.
+    // new(nothrow) statt Behälter, wie beim Drucken: übersetzt wird ohne /EH,
+    // ein catch hätte hier also keine geordnete Abwicklung hinter sich.
     const UINT stride = frame.width * kBytes;
-    std::vector<BYTE> pixels(static_cast<size_t>(stride) * frame.height);
-    if (FAILED(source->CopyPixels(nullptr, stride, static_cast<UINT>(pixels.size()),
-                                  pixels.data())))
+    const size_t bytes = static_cast<size_t>(stride) * frame.height;
+    std::unique_ptr<BYTE[]> pixels(new (std::nothrow) BYTE[bytes]);
+    if (!pixels)
+    {
+        error = L"Für das Einzelbild des GIFs ist nicht genug Speicher frei.";
+        return false;
+    }
+    if (FAILED(source->CopyPixels(nullptr, stride, static_cast<UINT>(bytes), pixels.get())))
     {
         error = L"Einzelbild des GIFs konnte nicht gelesen werden.";
         return false;
@@ -330,7 +354,7 @@ bool GifAnimator::DrawFrame(UINT index, std::wstring& error)
     for (UINT y = 0; y < height; ++y)
     {
         BYTE* dst = data + static_cast<size_t>(y) * canvasStride;
-        const BYTE* src = pixels.data() + static_cast<size_t>(y) * stride;
+        const BYTE* src = pixels.get() + static_cast<size_t>(y) * stride;
         for (UINT x = 0; x < width; ++x, dst += kBytes, src += kBytes)
         {
             const UINT alpha = src[3];

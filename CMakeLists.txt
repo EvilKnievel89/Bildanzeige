@@ -62,7 +62,15 @@ if (MSVC)
     # Das Manifest wird über die .rc eingebettet; der Linker darf kein zweites
     # erzeugen. /guard:cf muss auch der Linker sehen, sonst trägt die EXE die
     # Sprungtabelle zwar in sich, meldet sie aber nicht an.
-    target_link_options(Bildanzeige PRIVATE /MANIFEST:NO /guard:cf)
+    #
+    # /CETCOMPAT meldet die EXE für den Schattenstapel der CPU an (Hardware-
+    # enforced Stack Protection) -- die Exploit-Klasse, die bei einem Fehler in
+    # einem Bild-Codec zum Tragen käme; Prozessoren ohne CET übergehen es.
+    # /DEPENDENTLOADFLAG:0x800 lässt die importierten DLLs nur noch aus
+    # System32 auflösen: eine gleichnamige DLL neben der EXE liefe sonst mit.
+    # Alle Importe hier sind System-DLLs, die EXE selbst verliert also nichts.
+    target_link_options(Bildanzeige PRIVATE /MANIFEST:NO /guard:cf /CETCOMPAT
+        /DEPENDENTLOADFLAG:0x800)
     # Statische CRT -> eine einzelne, portable EXE ohne Redistributable.
     set_property(TARGET Bildanzeige PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

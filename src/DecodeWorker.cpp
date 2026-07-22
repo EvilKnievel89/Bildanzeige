@@ -45,6 +45,17 @@ namespace
             return;
         }
 
+        // Vor jeder weiteren Arbeit, denn ab hier kosten die behaupteten Maße
+        // Speicher. Warum es die Grenze gibt, steht bei kMaxImagePixels.
+        if (static_cast<unsigned long long>(result.sourceWidth) * result.sourceHeight >
+            kMaxImagePixels)
+        {
+            result.error = L"Das Bild meldet " + std::to_wstring(result.sourceWidth) + L" x " +
+                           std::to_wstring(result.sourceHeight) +
+                           L" Bildpunkte. Mehr als 250 Megapixel zeigt die Anzeige nicht an.";
+            return;
+        }
+
         // Ohne die Umwandlung nach 32bppPBGRA bleiben etwa 1-bpp-Fax-TIFFs
         // unsichtbar -- Direct2D nimmt ihr Format nicht an.
         ComPtr<IWICFormatConverter> converter;
