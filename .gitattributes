@@ -1,0 +1,10 @@
+# Zeilenenden: im Speicher einheitlich LF, im Arbeitsbaum wie am Rechner
+# ueblich. Git entscheidet selbst, was Text ist.
+* text=auto
+
+# Testdaten sind Pruefstuecke und muessen Byte fuer Byte so bleiben, wie die
+# Erzeuger in tools/ sie schreiben. Ohne diese Zeile bekaeme ordner/notiz.txt
+# beim Auschecken auf Windows andere Zeilenenden und waere 54 statt 53 Byte
+# gross -- der Vergleich "neu erzeugt gegen Bestand" schluege dann fehl,
+# obwohl nichts kaputt ist.
+testdata/** -text

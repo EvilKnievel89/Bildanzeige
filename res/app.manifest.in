@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <!-- Von CMake aus res/app.manifest.in erzeugt; die Version kommt aus der
+       project()-Zeile der CMakeLists.txt. -->
+  <assemblyIdentity type="win32" name="Bildanzeige" version="@PROJECT_VERSION@.0"
+                    processorArchitecture="amd64"/>
+
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity type="win32" name="Microsoft.Windows.Common-Controls"
+                        version="6.0.0.0" processorArchitecture="amd64"
+                        publicKeyToken="6595b64144ccf1df" language="*"/>
+    </dependentAssembly>
+  </dependency>
+
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+    <security>
+      <requestedPrivileges>
+        <!-- Ein Bildbetrachter hat nichts zu erhoehen. Ohne diese Angabe waere
+             das zwar auch das Verhalten, aber Windows raet bei Programmen ohne
+             Angabe aus dem Dateinamen, ob es sich um ein Installationsprogramm
+             handelt. Hier steht es ausdruecklich. -->
+        <requestedExecutionLevel level="asInvoker" uiAccess="false"/>
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
+      <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true/pm</dpiAware>
+      <activeCodePage xmlns="http://schemas.microsoft.com/SMI/2019/WindowsSettings">UTF-8</activeCodePage>
+      <!-- longPathAware steht hier bewusst nicht. Die eigenen Puffer waeren
+           dafuer bereit (nirgends MAX_PATH, ueberall std::wstring), aber die
+           Pfadhilfen aus shlwapi sind es nicht: PathIsDirectoryW,
+           PathFindFileNameW und PathFindExtensionW hoeren bei 260 Zeichen auf.
+           Der Schalter verspraeche also mehr, als der Code haelt.
+           (Zwei Bindestriche nacheinander duerfen in einem XML-Kommentar
+           uebrigens nicht stehen, auch wenn sie sonst ueberall im Projekt
+           den Gedankenstrich vertreten.) -->
+    </windowsSettings>
+  </application>
+
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <!-- Windows 10 / 11 -->
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"/>
+    </application>
+  </compatibility>
+</assembly>

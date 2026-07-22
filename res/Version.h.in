@@ -1,0 +1,12 @@
+#pragma once
+
+// Von CMake erzeugt -- nicht von Hand aendern. Die Vorlage ist
+// res/Version.h.in, die Nummer selbst steht allein in der project()-Zeile der
+// CMakeLists.txt. Vorher stand sie doppelt: dort und in der Ressourcendatei.
+// Zwei Stellen fuer dieselbe Zahl sind eine Stelle zu viel -- die zweite wird
+// vergessen, und die EXE gibt sich hinterher als eine andere Fassung aus, als
+// sie ist.
+
+// FILEVERSION und PRODUCTVERSION erwarten vier durch Kommas getrennte Zahlen.
+#define VER_NUMBER @PROJECT_VERSION_MAJOR@,@PROJECT_VERSION_MINOR@,@PROJECT_VERSION_PATCH@,0
+#define VER_STRING "@PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@.@PROJECT_VERSION_PATCH@.0"

@@ -1,0 +1,55 @@
+#pragma once
+
+#include <d2d1.h>
+
+// Abbildung des Bildes in die Bildflaeche: Drehung, Massstab, Ausschnitt.
+//
+// Der Ausschnitt wird als der Bildpunkt gefuehrt, der in der Mitte der
+// Bildflaeche liegt -- nicht als Verschiebung in Fensterpixeln. Dadurch bleibt
+// beim Zoomen und beim Groessenaendern des Fensters dieselbe Stelle im Blick,
+// statt dass das Bild unter dem Zeiger fortwandert.
+//
+// Es gibt genau zwei Zustaende: eingepasst (der Massstab folgt dem Fenster) und
+// frei (Massstab und Ausschnitt sind gesetzt). Herauszoomen endet stets wieder
+// beim Einpassen; kleiner als noetig wird nicht gezeigt.
+class ViewState
+{
+public:
+    void SetImageSize(D2D1_SIZE_F size);
+    void SetViewport(D2D1_SIZE_F size);
+    void Reset();                       // zurueck aufs Einpassen, Drehung bleibt
+
+    void Rotate(int quarters);
+    void SetRotation(int quarters);     // Startdrehung, etwa aus EXIF
+    int Rotation() const { return rotation_; }
+
+    void FitToWindow();
+    void ActualSize();
+    void ZoomBy(float factor, D2D1_POINT_2F anchor);   // Anker in Fensterpixeln
+    void ZoomBy(float factor);                          // um die Mitte
+    void PanBy(float dx, float dy);                     // in Fensterpixeln
+
+    D2D1_SIZE_F ImageSize() const { return image_; }
+    bool HasImage() const;
+    bool IsFit() const { return fit_; }
+    bool IsActualSize() const;
+    bool CanZoomIn() const;
+    bool CanZoomOut() const;
+    bool CanPan() const;
+
+    float Scale() const;
+    D2D1_RECT_F DestRect() const;   // Zielrechteck der gedrehten Ansicht
+
+private:
+    D2D1_SIZE_F Shown() const;      // Groesse nach Drehung
+    float FitScale() const;
+    D2D1_POINT_2F Center() const;
+    D2D1_POINT_2F ClampCenter(D2D1_POINT_2F center, float scale) const;
+
+    D2D1_SIZE_F image_{};
+    D2D1_SIZE_F viewport_{};
+    int rotation_ = 0;      // Vielfache von 90 Grad, 0..3
+    bool fit_ = true;
+    float scale_ = 1.0f;
+    D2D1_POINT_2F center_{};
+};

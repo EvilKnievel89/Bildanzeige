@@ -1,0 +1,10 @@
+build/
+out/
+.vs/
+*.user
+CMakeUserPresets.json
+
+# Von Hand uebersetzte Erzeuger aus tools/. Ueber mktestdaten.ps1 entsteht
+# hier nichts -- das uebersetzt nach %TEMP%.
+*.exe
+*.obj

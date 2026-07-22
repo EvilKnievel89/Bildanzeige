@@ -1,0 +1,51 @@
+#include <winres.h>
+
+#include "Resource.h"
+#include "Version.h"
+
+// 24 == RT_MANIFEST, 1 == CREATEPROCESS_MANIFEST_RESOURCE_ID
+1 24 "app.manifest"
+
+// Die .ico bringt neun Groessen mit (16 bis 256). Windows sucht sich daraus
+// jeweils die passende: 16 fuer die Titelleiste, 32 fuer Alt+Tab, 256 fuer die
+// grosse Kachelansicht des Explorers. Deshalb liegt hier die ganze Datei und
+// nicht ein einzelnes Bild -- sonst rechnete die Shell die fehlenden Groessen
+// aus einer vorhandenen hoch, und genau das sieht man einem Symbol an.
+IDI_APP ICON "icon.ico"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     VER_NUMBER
+PRODUCTVERSION  VER_NUMBER
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+#ifdef _DEBUG
+FILEFLAGS       VS_FF_DEBUG
+#else
+FILEFLAGS       0
+#endif
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
+FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        // 0407 == Deutsch (Deutschland), 04b0 == 1200 == Unicode.
+        BLOCK "040704b0"
+        BEGIN
+            // FileDescription ist der Name, unter dem die Anwendung im
+            // Task-Manager und im Menue "Oeffnen mit" erscheint -- nicht der
+            // Dateiname. Fehlt der Eintrag, steht dort "Bildanzeige.exe".
+            VALUE "FileDescription", "Bildanzeige"
+            VALUE "FileVersion",     VER_STRING
+            VALUE "InternalName",    "Bildanzeige"
+            VALUE "OriginalFilename","Bildanzeige.exe"
+            VALUE "ProductName",     "Bildanzeige"
+            VALUE "ProductVersion",  VER_STRING
+            VALUE "LegalCopyright",  "Copyright (C) 2026 EvilKnievel89"
+            VALUE "Comments",        "Schlanker Bildbetrachter im Geist der Windows Bild- und Faxanzeige."
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x407, 1200
+    END
+END
