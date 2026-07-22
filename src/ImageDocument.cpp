@@ -8,18 +8,18 @@ namespace
 {
     // Windows meldet Decoder an, deren Umsetzung es nicht mitliefert: WebP,
     // HEIF und AVIF stecken in Erweiterungen aus dem Microsoft Store, die sich
-    // unter der CLSID einhaengen, die windowscodecs.dll bereits fuehrt. Fehlt
+    // unter der CLSID einhängen, die windowscodecs.dll bereits führt. Fehlt
     // die Erweiterung, bleibt der Eintrag also stehen, und erst das Erzeugen
     // scheitert -- daher WINCODEC_ERR_COMPONENTINITIALIZEFAILURE und nicht
     // "Format unbekannt". Auf Windows Server gibt es keinen Store; dort fehlen
     // sie im Auslieferungszustand allesamt.
     //
-    // Der blosse Fehlercode fuehrt in die Irre, weil er nach einem Fehler in
+    // Der bloße Fehlercode führt in die Irre, weil er nach einem Fehler in
     // der Datei klingt. Der Hinweis nennt deshalb, was zu installieren ist.
     struct StoreCodec
     {
         const wchar_t* extensions;   // klein geschrieben, jede in Semikola
-        const wchar_t* missing;      // schliesst an "es " an
+        const wchar_t* missing;      // schließt an "es " an
     };
 
     const StoreCodec kStoreCodecs[] = {
@@ -43,9 +43,9 @@ namespace
         for (wchar_t& c : extension)
             c = static_cast<wchar_t>(std::towlower(c));
 
-        std::wstring hint = L"Der Decoder fuer ";
+        std::wstring hint = L"Der Decoder für ";
         hint += extension.empty() ? L"dieses Format" : (L"\"" + extension + L"\"");
-        hint += L" ist angemeldet, laesst sich auf diesem Rechner aber nicht erzeugen";
+        hint += L" ist angemeldet, lässt sich auf diesem Rechner aber nicht erzeugen";
 
         const std::wstring needle = L";" + extension + L";";
         for (const StoreCodec& codec : kStoreCodecs)
@@ -65,7 +65,7 @@ namespace
         return hint;
     }
 
-    // EXIF-Tag 274. Wo die IFD haengt, entscheidet der Container: JPEG und HEIF
+    // EXIF-Tag 274. Wo die IFD hängt, entscheidet der Container: JPEG und HEIF
     // legen sie in den APP1-Block, TIFF hat sie unmittelbar. Beide Pfade werden
     // versucht, statt den Containertyp abzufragen -- ein fehlender Pfad kostet
     // nur einen fehlgeschlagenen Aufruf.
@@ -89,10 +89,10 @@ namespace
 
     // EXIF 1..8 auf Vierteldrehungen im Uhrzeigersinn.
     //
-    // Die vier gespiegelten Faelle (2, 4, 5, 7) entstehen aus Kameras praktisch
+    // Die vier gespiegelten Fälle (2, 4, 5, 7) entstehen aus Kameras praktisch
     // nie -- sie stammen aus Bildbearbeitung, die das Spiegeln in die Metadaten
-    // geschrieben hat. Von ihnen wird nur der Drehanteil uebernommen; eine
-    // Spiegelung kennt die Anzeige nicht, und sie dafuer einzufuehren hiesse,
+    // geschrieben hat. Von ihnen wird nur der Drehanteil übernommen; eine
+    // Spiegelung kennt die Anzeige nicht, und sie dafür einzuführen hieße,
     // Drehung und Spiegelung durch die ganze Ansicht zu ziehen.
     int QuartersFromOrientation(unsigned value)
     {
@@ -115,12 +115,12 @@ bool ImageDocument::Open(IWICImagingFactory* factory, const std::wstring& path, 
         path.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, &decoder);
     if (FAILED(hr))
     {
-        error = L"Datei konnte nicht geoeffnet werden.\n\n";
+        error = L"Datei konnte nicht geöffnet werden.\n\n";
 
         // Nur bei diesem einen Code steht fest, dass der Decoder eingetragen
         // ist und allein seine Umsetzung fehlt. WINCODEC_ERR_COMPONENTNOTFOUND
-        // sieht aehnlich aus, heisst aber meist, dass die Datei gar kein Bild
-        // ist -- dort waere der Hinweis schlicht falsch.
+        // sieht ähnlich aus, heißt aber meist, dass die Datei gar kein Bild
+        // ist -- dort wäre der Hinweis schlicht falsch.
         if (hr == WINCODEC_ERR_COMPONENTINITIALIZEFAILURE)
             error += MissingCodecHint(path) + L"\n\n";
 
@@ -132,7 +132,7 @@ bool ImageDocument::Open(IWICImagingFactory* factory, const std::wstring& path, 
     hr = decoder->GetFrameCount(&frameCount);
     if (FAILED(hr) || frameCount == 0)
     {
-        error = L"Die Datei enthaelt kein lesbares Bild.\n\n" + FormatHResult(hr);
+        error = L"Die Datei enthält kein lesbares Bild.\n\n" + FormatHResult(hr);
         return false;
     }
 
@@ -157,7 +157,7 @@ int ImageDocument::ReadOrientation(IWICBitmapDecoder* decoder)
     if (decoder == nullptr || FAILED(decoder->GetFrame(0, &frame)))
         return 0;
 
-    // Die meisten Dateien haben ueberhaupt keine Metadaten; das schlaegt hier
+    // Die meisten Dateien haben überhaupt keine Metadaten; das schlägt hier
     // fehl und ist kein Fehler, sondern der Normalfall.
     ComPtr<IWICMetadataQueryReader> reader;
     if (FAILED(frame->GetMetadataQueryReader(&reader)))
@@ -173,8 +173,8 @@ int ImageDocument::ReadOrientation(IWICBitmapDecoder* decoder)
                           ReadUInt(value, raw);
         PropVariantClear(&value);
 
-        // Ausserhalb von 1..8 ist der Wert kaputt; dann lieber ungedreht
-        // zeigen, als das Bild auf gut Glueck zu kippen.
+        // Außerhalb von 1..8 ist der Wert kaputt; dann lieber ungedreht
+        // zeigen, als das Bild auf gut Glück zu kippen.
         if (read && raw >= 1 && raw <= 8)
             return QuartersFromOrientation(raw);
     }
@@ -186,7 +186,7 @@ ComPtr<IWICBitmapSource> ImageDocument::LoadFrame(IWICImagingFactory* factory, U
 {
     if (!decoder_ || index >= frameCount_)
     {
-        error = L"Ungueltiger Frame-Index.";
+        error = L"Ungültiger Frame-Index.";
         return nullptr;
     }
 
@@ -202,7 +202,7 @@ ComPtr<IWICBitmapSource> ImageDocument::LoadFrame(IWICImagingFactory* factory, U
     hr = factory->CreateFormatConverter(&converter);
     if (FAILED(hr))
     {
-        error = L"Formatkonverter nicht verfuegbar.\n\n" + FormatHResult(hr);
+        error = L"Formatkonverter nicht verfügbar.\n\n" + FormatHResult(hr);
         return nullptr;
     }
 
@@ -210,7 +210,7 @@ ComPtr<IWICBitmapSource> ImageDocument::LoadFrame(IWICImagingFactory* factory, U
                                WICBitmapDitherTypeNone, nullptr, 0.0, WICBitmapPaletteTypeCustom);
     if (FAILED(hr))
     {
-        error = L"Bildformat wird nicht unterstuetzt.\n\n" + FormatHResult(hr);
+        error = L"Bildformat wird nicht unterstützt.\n\n" + FormatHResult(hr);
         return nullptr;
     }
 

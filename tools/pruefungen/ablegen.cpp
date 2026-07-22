@@ -1,14 +1,14 @@
 // Prueft die Pfadentnahme aus MainWindow::OnDropFiles an einem echten HDROP.
 //
-// Der Ablegevorgang selbst laesst sich von aussen nicht ausloesen: die Shell
+// Der Ablegevorgang selbst lässt sich von außen nicht auslösen: die Shell
 // legt das HDROP im Zielprozess an, und ein Handle aus einem fremden Prozess
-// ist dort wertlos. Was hier geprueft wird, ist der Teil mit echtem Risiko --
-// die Groessenrechnung der Puffer. DragQueryFileW meldet die Laenge ohne
-// Abschluss, will aber die Puffergroesse mit Abschluss.
+// ist dort wertlos. Was hier geprüft wird, ist der Teil mit echtem Risiko --
+// die Größenrechnung der Puffer. DragQueryFileW meldet die Länge ohne
+// Abschluss, will aber die Puffergröße mit Abschluss.
 //
-// Geprueft werden eine Datei, mehrere auf einmal, Umlaute und Leerzeichen, ein
+// Geprüft werden eine Datei, mehrere auf einmal, Umlaute und Leerzeichen, ein
 // Ordner und ein Pfad jenseits von MAX_PATH. Das Programm meldet selbst, ob
-// alle Faelle bestanden sind -- Rueckgabewert 0 heisst ja. Siehe PLAN.md,
+// alle Fälle bestanden sind -- Rückgabewert 0 heißt ja. Siehe PLAN.md,
 // Abschnitt 6.
 
 #include <windows.h>
@@ -23,7 +23,7 @@
 
 namespace
 {
-    // Baut ein HDROP, wie es die Shell beim Ablegen ueberreicht.
+    // Baut ein HDROP, wie es die Shell beim Ablegen überreicht.
     HDROP MakeDrop(const std::vector<std::wstring>& paths)
     {
         std::wstring block;
@@ -79,38 +79,38 @@ namespace
         const bool ok = got == expected && got.size() == expected.size();
         if (!ok)
             ++failures;
-        wprintf(L"  %-5s %2zu Datei(en) -> \"%s\"  (Laenge %zu)\n",
+        wprintf(L"  %-5s %2zu Datei(en) -> \"%s\"  (Länge %zu)\n",
                 ok ? L"ok" : L"FEHL", paths.size(), got.c_str(), got.size());
     }
 }
 
 int wmain()
 {
-    // Ohne das gaebe wprintf die Umlaute in der Zeichentabelle der Konsole aus
-    // -- und einer der Faelle handelt gerade von Umlauten. Die Pruefung selbst
-    // vergliche zwar richtig, nur waere ihr Ausdruck nicht zu lesen.
+    // Ohne das gäbe wprintf die Umlaute in der Zeichentabelle der Konsole aus
+    // -- und einer der Fälle handelt gerade von Umlauten. Die Prüfung selbst
+    // vergliche zwar richtig, nur wäre ihr Ausdruck nicht zu lesen.
     setlocale(LC_ALL, ".UTF8");
 
     wprintf(L"Pfadentnahme aus einem HDROP:\n");
 
     Check({ L"E:\\bilder\\foto.jpg" }, L"E:\\bilder\\foto.jpg");
 
-    // Mehrere Dateien: die erste zaehlt, die uebrigen liegen im selben Ordner.
+    // Mehrere Dateien: die erste zählt, die übrigen liegen im selben Ordner.
     Check({ L"E:\\bilder\\a.png", L"E:\\bilder\\b.png", L"E:\\bilder\\c.png" },
           L"E:\\bilder\\a.png");
 
-    // Umlaute und Leerzeichen -- die Laenge zaehlt in Zeichen, nicht in Bytes.
+    // Umlaute und Leerzeichen -- die Länge zählt in Zeichen, nicht in Bytes.
     Check({ L"E:\\Meine Bilder\\Grüße aus München.jpeg" },
           L"E:\\Meine Bilder\\Grüße aus München.jpeg");
 
-    // Ein Ordner kommt genauso an wie eine Datei; OpenFile faengt ihn ab.
+    // Ein Ordner kommt genauso an wie eine Datei; OpenFile fängt ihn ab.
     Check({ L"E:\\bilder" }, L"E:\\bilder");
 
-    // Laenger als MAX_PATH.
+    // Länger als MAX_PATH.
     Check({ L"E:\\" + std::wstring(400, L'x') + L"\\bild.png" },
           L"E:\\" + std::wstring(400, L'x') + L"\\bild.png");
 
-    wprintf(failures == 0 ? L"\nAlle Faelle bestanden.\n" : L"\n%d Faelle fehlgeschlagen.\n",
+    wprintf(failures == 0 ? L"\nAlle Fälle bestanden.\n" : L"\n%d Fälle fehlgeschlagen.\n",
             failures);
     return failures == 0 ? 0 : 1;
 }

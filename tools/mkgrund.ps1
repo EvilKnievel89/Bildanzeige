@@ -1,11 +1,11 @@
-# Die beiden Grundbilder und die Notiz:
+﻿# Die beiden Grundbilder und die Notiz:
 #
 #   gross.png              3000x2000 -- muss verkleinert eingepasst werden
 #   klein.png              120x80    -- darf *nicht* aufgeblasen werden
 #   ordner\notiz.txt       keine Bilddatei, darf nicht in der Ordnerliste stehen
 #
-# Beide tragen ihre Masse als Aufschrift: auf einem Bildschirmabzug ist damit
-# ohne Nachschlagen zu sehen, welche Datei gerade zu sehen ist. Der weisse
+# Beide tragen ihre Maße als Aufschrift: auf einem Bildschirmabzug ist damit
+# ohne Nachschlagen zu sehen, welche Datei gerade zu sehen ist. Der weiße
 # Rahmen in gross.png sitzt 30 Punkte innen -- wird das Bild eingepasst, muss
 # er ringsum sichtbar bleiben; ist auch nur eine Kante angeschnitten, stimmt
 # die Rechnung nicht.
@@ -36,8 +36,8 @@ function Schreibe([string]$name, [int]$w, [int]$h, [scriptblock]$malen) {
 
 Schreibe "gross.png" 3000 2000 {
     param($g)
-    # Verlauf ueber die Diagonale: an jeder Stelle eine andere Farbe, damit beim
-    # Verkleinern auffaellt, wenn Zeilen oder Spalten uebersprungen werden.
+    # Verlauf über die Diagonale: an jeder Stelle eine andere Farbe, damit beim
+    # Verkleinern auffällt, wenn Zeilen oder Spalten übersprungen werden.
     $verlauf = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
         (New-Object System.Drawing.Point 0,0),
         (New-Object System.Drawing.Point 3000,2000),
@@ -65,8 +65,8 @@ Schreibe "klein.png" 120 80 {
     $schrift.Dispose()
 }
 
-# Bewusst ueber WriteAllText: Set-Content haengt einen Zeilenumbruch aus zwei
-# Zeichen an und schriebe je nach Fassung von PowerShell eine Stueckliste
+# Bewusst über WriteAllText: Set-Content hängt einen Zeilenumbruch aus zwei
+# Zeichen an und schriebe je nach Fassung von PowerShell eine Stückliste
 # voran. Hier steht genau, was in der Datei landet.
 $notiz = Join-Path $ordner "notiz.txt"
 [System.IO.File]::WriteAllText($notiz, "Kein Bild. Darf in der Ordnerliste nicht auftauchen.`n",

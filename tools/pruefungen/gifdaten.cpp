@@ -2,9 +2,9 @@
 //
 //     gifdaten.exe ..\..\testdata\anim.gif
 //
-// Liest die Metadaten Feld fuer Feld aus und gibt neben dem Wert auch den
-// Variantentyp aus. Genau daran haengt Abschnitt 5 von PLAN.md: die
-// Verzoegerung kommt als VT_UI2 und in Hundertstelsekunden, die Aufraeumregel
+// Liest die Metadaten Feld für Feld aus und gibt neben dem Wert auch den
+// Variantentyp aus. Genau daran hängt Abschnitt 5 von PLAN.md: die
+// Verzögerung kommt als VT_UI2 und in Hundertstelsekunden, die Aufräumregel
 // als VT_UI1, und /imgdesc/Width ist etwas anderes als IWICBitmapFrameDecode::
 // GetSize -- wer beides verwechselt, komponiert Teilrechtecke an die falsche
 // Stelle.
@@ -100,7 +100,7 @@ int wmain() {
         CK(fe->Commit());
     }
     CK(enc->Commit());
-    enc.Reset();        // Encoder haelt eine Referenz auf den Stream -> zuerst freigeben
+    enc.Reset();        // Encoder hält eine Referenz auf den Stream -> zuerst freigeben
     stream.Reset();
 
     wprintf(L"\n=== DECODE ===\n");

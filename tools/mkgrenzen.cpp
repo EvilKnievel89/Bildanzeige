@@ -1,15 +1,15 @@
 // Testdaten an den Grenzen. Schreibt in das laufende Verzeichnis:
 //
-//   riesig.jpg   8000 x 8000 -- gross genug, dass das Dekodieren messbar
+//   riesig.jpg   8000 x 8000 -- groß genug, dass das Dekodieren messbar
 //                dauert (256 MB Textur). Ein Schachbrett aus 500er-Feldern:
-//                es laesst sich zaehlen und komprimiert trotzdem gut.
+//                es lässt sich zählen und komprimiert trotzdem gut.
 //   ueberbreit.png  20000 x 400 -- jenseits der Texturgrenze (16384). Muss
-//                verkleinert hochgeladen werden, ohne dass der Massstab luegt.
-//   kaputt.png   ein PNG, dem der Rumpf fehlt: auf ein Fuenftel gekuerzt.
+//                verkleinert hochgeladen werden, ohne dass der Maßstab lügt.
+//   kaputt.png   ein PNG, dem der Rumpf fehlt: auf ein Fünftel gekürzt.
 //
-// Zum letzten gehoert ein Befund: WIC zeigt es trotzdem an. Gesucht war eine
-// Datei, an der der Fehlerweg des Hintergrund-Threads anschlaegt -- weder
-// Kuerzen noch verfaelschte Bytes reichen dafuer. Was wirklich anschlaegt,
+// Zum letzten gehört ein Befund: WIC zeigt es trotzdem an. Gesucht war eine
+// Datei, an der der Fehlerweg des Hintergrund-Threads anschlägt -- weder
+// Kürzen noch verfälschte Bytes reichen dafür. Was wirklich anschlägt,
 // ist ein Pfad, der verschwindet (PLAN.md, Abschnitt 7).
 
 #include <windows.h>
@@ -54,8 +54,8 @@ namespace
         return SUCCEEDED(encoder->Commit());
     }
 
-    // Schachbrett: jedes Feld ist entweder weiss oder dunkelgrau. Ueber die
-    // Zahl der weissen Bildpunkte laesst sich spaeter nachrechnen, dass wirklich
+    // Schachbrett: jedes Feld ist entweder weiß oder dunkelgrau. Über die
+    // Zahl der weißen Bildpunkte lässt sich später nachrechnen, dass wirklich
     // das ganze Bild angekommen ist.
     std::vector<BYTE> Checkerboard(UINT width, UINT height, UINT field)
     {
@@ -75,7 +75,7 @@ namespace
         return pixels;
     }
 
-    // Ein weisser Block in der linken oberen Ecke, sonst dunkel -- wie schon bei
+    // Ein weißer Block in der linken oberen Ecke, sonst dunkel -- wie schon bei
     // den Drehbildern. Damit ist die Lage nach dem Verkleinern noch ablesbar.
     std::vector<BYTE> CornerBlock(UINT width, UINT height, UINT block)
     {
@@ -93,12 +93,12 @@ namespace
         return pixels;
     }
 
-    // Ein gueltiges PNG erzeugen und danach hinten abschneiden: IHDR mit
-    // Groesse bleibt stehen, der Datenstrom bricht mittendrin ab.
+    // Ein gültiges PNG erzeugen und danach hinten abschneiden: IHDR mit
+    // Größe bleibt stehen, der Datenstrom bricht mittendrin ab.
     //
     // Erst als JPEG versucht -- das verzeiht WIC aber: es meldet zwar "premature
-    // end of data segment", liefert die Pixel trotzdem und faellt damit als
-    // Fehlerfall aus. PNG traegt Pruefsummen je Block und bricht wirklich ab.
+    // end of data segment", liefert die Pixel trotzdem und fällt damit als
+    // Fehlerfall aus. PNG trägt Prüfsummen je Block und bricht wirklich ab.
     bool WriteTruncated(const wchar_t* path, UINT width, UINT height)
     {
         const std::wstring temp = std::wstring(path) + L".voll";
@@ -117,7 +117,7 @@ namespace
         CloseHandle(file);
         DeleteFileW(temp.c_str());
 
-        // Ein Fuenftel behalten: Kopf und Tabellen sind durch, die Bilddaten
+        // Ein Fünftel behalten: Kopf und Tabellen sind durch, die Bilddaten
         // brechen mittendrin ab.
         const DWORD keep = read / 5;
         HANDLE out = CreateFileW(path, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
@@ -127,7 +127,7 @@ namespace
         WriteFile(out, data.data(), keep, &written, nullptr);
         CloseHandle(out);
 
-        wprintf(L"  kaputt.png: von %lu auf %lu Bytes gekuerzt\n", read, keep);
+        wprintf(L"  kaputt.png: von %lu auf %lu Bytes gekürzt\n", read, keep);
         return written == keep;
     }
 
@@ -138,7 +138,7 @@ namespace
                                                           WICDecodeMetadataCacheOnDemand, &decoder);
         if (FAILED(hr))
         {
-            wprintf(L"  %-16s oeffnen fehlgeschlagen (0x%08lX)\n", path, hr);
+            wprintf(L"  %-16s öffnen fehlgeschlagen (0x%08lX)\n", path, hr);
             return;
         }
 
@@ -152,7 +152,7 @@ namespace
         UINT w = 0, h = 0;
         frame->GetSize(&w, &h);
 
-        // Probeweise dekodieren -- genau das tut spaeter der Hintergrund-Thread.
+        // Probeweise dekodieren -- genau das tut später der Hintergrund-Thread.
         ComPtr<IWICFormatConverter> converter;
         g_factory->CreateFormatConverter(&converter);
         hr = converter->Initialize(frame.Get(), GUID_WICPixelFormat32bppPBGRA,
@@ -178,14 +178,14 @@ int wmain()
     if (FAILED(CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER,
                                 IID_PPV_ARGS(&g_factory))))
     {
-        wprintf(L"WIC nicht verfuegbar\n");
+        wprintf(L"WIC nicht verfügbar\n");
         return 1;
     }
 
     wprintf(L"Erzeugen:\n");
     // Als JPEG, nicht als PNG: ein PNG-Schachbrett ist in 78 ms entpackt und
-    // wuerde ueberhaupt nichts messbar machen. JPEG rechnet je Bloeckchen und
-    // braucht bei 64 Megapixeln spuerbar laenger.
+    // würde überhaupt nichts messbar machen. JPEG rechnet je Blöckchen und
+    // braucht bei 64 Megapixeln spürbar länger.
     if (!WritePng(L"riesig.jpg", 8000, 8000, Checkerboard(8000, 8000, 500),
                   GUID_ContainerFormatJpeg))
         wprintf(L"  riesig.jpg FEHLGESCHLAGEN\n");
@@ -197,7 +197,7 @@ int wmain()
     if (!WriteTruncated(L"kaputt.png", 800, 600))
         wprintf(L"  kaputt.png FEHLGESCHLAGEN\n");
 
-    wprintf(L"\nZurueckgelesen:\n");
+    wprintf(L"\nZurückgelesen:\n");
     Report(L"riesig.jpg");
     Report(L"ueberbreit.png");
     Report(L"kaputt.png");

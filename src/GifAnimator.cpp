@@ -11,8 +11,8 @@ namespace
     // vormultipliziert. Dasselbe Format liefert ImageDocument::LoadFrame.
     constexpr UINT kBytes = 4;
 
-    // Obergrenze fuer die aufgehobenen Leinwaende. Darueber wird fortlaufend
-    // komponiert; ein Ruecksprung kostet dann einen Neuaufbau ab Frame 0.
+    // Obergrenze für die aufgehobenen Leinwände. Darüber wird fortlaufend
+    // komponiert; ein Rücksprung kostet dann einen Neuaufbau ab Frame 0.
     constexpr size_t kMaxCacheBytes = 256ull * 1024ull * 1024ull;
 
     UINT ReadUInt(IWICMetadataQueryReader* reader, const wchar_t* path, UINT fallback)
@@ -56,9 +56,9 @@ namespace
             PROPVARIANT data;
             PropVariantInit(&data);
 
-            // WIC entfernt den Block-Terminator: es kommen 4 Bytes zurueck, nicht
-            // die geschriebenen 5. Die Laenge muss also geprueft werden. Der
-            // Zaehler steht little-endian in Byte 2 und 3, 0 heisst endlos.
+            // WIC entfernt den Block-Terminator: es kommen 4 Bytes zurück, nicht
+            // die geschriebenen 5. Die Länge muss also geprüft werden. Der
+            // Zähler steht little-endian in Byte 2 und 3, 0 heißt endlos.
             if (SUCCEEDED(reader->GetMetadataByName(L"/appext/Data", &data)) &&
                 data.vt == (VT_UI1 | VT_VECTOR) && data.caub.cElems >= 4)
             {
@@ -85,7 +85,7 @@ bool GifAnimator::Load(IWICImagingFactory* factory, const ImageDocument& documen
         return false;
 
     ComPtr<IWICMetadataQueryReader> global;
-    decoder->GetMetadataQueryReader(&global);   // fehlt sie, greifen die Ruecklagen
+    decoder->GetMetadataQueryReader(&global);   // fehlt sie, greifen die Rücklagen
 
     UINT canvasWidth = ReadUInt(global.Get(), L"/logscrdesc/Width", 0);
     UINT canvasHeight = ReadUInt(global.Get(), L"/logscrdesc/Height", 0);
@@ -105,9 +105,9 @@ bool GifAnimator::Load(IWICImagingFactory* factory, const ImageDocument& documen
 
         Frame entry{};
 
-        // Massgeblich ist die tatsaechliche Groesse der Pixeldaten, nicht die
-        // Angabe unter /imgdesc: weichen beide voneinander ab, laege beim
-        // Kopieren sonst ein Ueberlauf nahe.
+        // Maßgeblich ist die tatsächliche Größe der Pixeldaten, nicht die
+        // Angabe unter /imgdesc: weichen beide voneinander ab, läge beim
+        // Kopieren sonst ein Überlauf nahe.
         if (FAILED(frame->GetSize(&entry.width, &entry.height)))
             return false;
 
@@ -118,7 +118,7 @@ bool GifAnimator::Load(IWICImagingFactory* factory, const ImageDocument& documen
         entry.disposal = ReadUInt(meta.Get(), L"/grctlext/Disposal", 0);
 
         // Anzeigedauer in 1/100 s. 0 und 1 stehen in freier Wildbahn massenhaft
-        // fuer "so schnell wie moeglich" und ergaeben eine Vollgas-Schleife; wie
+        // für "so schnell wie möglich" und ergäben eine Vollgas-Schleife; wie
         // in Browsern werden sie auf 100 ms angehoben.
         UINT delay = ReadUInt(meta.Get(), L"/grctlext/Delay", 0);
         if (delay < 2)
@@ -130,8 +130,8 @@ bool GifAnimator::Load(IWICImagingFactory* factory, const ImageDocument& documen
         frames.push_back(entry);
     }
 
-    // Ohne brauchbares /logscrdesc bleibt nur die Huelle aller Frames. Steht die
-    // Angabe dagegen da, gilt sie -- ueberstehende Frames werden beschnitten,
+    // Ohne brauchbares /logscrdesc bleibt nur die Hülle aller Frames. Steht die
+    // Angabe dagegen da, gilt sie -- überstehende Frames werden beschnitten,
     // so wie es die Spezifikation vorsieht.
     if (canvasWidth == 0 || canvasHeight == 0)
     {
@@ -203,7 +203,7 @@ bool GifAnimator::EnsureCanvas()
     }
 
     // WIC sagt nicht zu, dass eine frische Bitmap genullt ist -- ohne dieses
-    // Leeren stuende womoeglich Speichermuell hinter den transparenten Stellen.
+    // Leeren stünde womöglich Speichermüll hinter den transparenten Stellen.
     composed_ = -1;
     return ClearArea(canvas_.Get(), 0, 0, canvasWidth_, canvasHeight_);
 }
@@ -228,7 +228,7 @@ bool GifAnimator::ClearArea(IWICBitmap* bitmap, UINT left, UINT top,
     if (FAILED(lock->GetStride(&stride)) || FAILED(lock->GetDataPointer(&size, &data)))
         return false;
 
-    // Zeilenweise, weil der Zeilenabstand groesser sein kann als die Breite des
+    // Zeilenweise, weil der Zeilenabstand größer sein kann als die Breite des
     // gesperrten Ausschnitts.
     for (UINT y = 0; y < height; ++y)
         std::memset(data + static_cast<size_t>(y) * stride, 0,
@@ -252,16 +252,16 @@ bool GifAnimator::ApplyDisposal(UINT index)
     switch (frame.disposal)
     {
     case 2:
-        // "Restore to background": die Flaeche des Frames wird wieder frei. Der
-        // Hintergrundindex aus /logscrdesc bleibt dabei aussen vor -- wie in
-        // Browsern wird durchsichtig geraeumt, sonst stuende bei einem
-        // transparenten GIF ploetzlich eine Farbflaeche im Bild.
+        // "Restore to background": die Fläche des Frames wird wieder frei. Der
+        // Hintergrundindex aus /logscrdesc bleibt dabei außen vor -- wie in
+        // Browsern wird durchsichtig geräumt, sonst stünde bei einem
+        // transparenten GIF plötzlich eine Farbfläche im Bild.
         return ClearArea(canvas_.Get(), frame.left, frame.top,
                          ClipWidth(frame), ClipHeight(frame));
 
     case 3:
         // "Restore to previous": der vor dem Frame gesicherte Stand. Fehlt die
-        // Sicherung, bleibt die Leinwand stehen -- das ist immer noch naeher am
+        // Sicherung, bleibt die Leinwand stehen -- das ist immer noch näher am
         // Gemeinten als sie zu leeren.
         if (backup_)
         {
@@ -280,7 +280,7 @@ bool GifAnimator::DrawFrame(UINT index, std::wstring& error)
     const Frame& frame = frames_[index];
 
     // Disposal 3 verlangt den Stand *vor* diesem Frame. Die Sicherung muss
-    // deshalb hier entstehen und nicht erst beim Aufraeumen danach.
+    // deshalb hier entstehen und nicht erst beim Aufräumen danach.
     if (frame.disposal == 3)
     {
         backup_ = CloneCanvas();
@@ -294,7 +294,7 @@ bool GifAnimator::DrawFrame(UINT index, std::wstring& error)
     const UINT width = ClipWidth(frame);
     const UINT height = ClipHeight(frame);
     if (width == 0 || height == 0)
-        return true;   // liegt ausserhalb der Leinwand
+        return true;   // liegt außerhalb der Leinwand
 
     ComPtr<IWICBitmapSource> source = document_->LoadFrame(factory_.Get(), index, error);
     if (!source)
@@ -342,7 +342,7 @@ bool GifAnimator::DrawFrame(UINT index, std::wstring& error)
                 continue;
             }
 
-            // Vormultipliziert ueberlagern: dst = src + dst * (1 - a). GIF kennt
+            // Vormultipliziert überlagern: dst = src + dst * (1 - a). GIF kennt
             // nur ganz oder gar nicht durchsichtig, aber der allgemeine Fall
             // kostet nichts und bleibt richtig, falls WIC doch einmal mischt.
             const UINT inverse = 255u - alpha;
@@ -360,7 +360,7 @@ ComPtr<IWICBitmapSource> GifAnimator::Compose(UINT index, std::wstring& error)
 {
     if (!IsActive() || index >= frames_.size())
     {
-        error = L"Ungueltiges Einzelbild.";
+        error = L"Ungültiges Einzelbild.";
         return nullptr;
     }
     if (caching_ && cache_[index])
@@ -368,12 +368,12 @@ ComPtr<IWICBitmapSource> GifAnimator::Compose(UINT index, std::wstring& error)
 
     if (!EnsureCanvas())
     {
-        error = L"Leinwand fuer das GIF konnte nicht angelegt werden.";
+        error = L"Leinwand für das GIF konnte nicht angelegt werden.";
         return nullptr;
     }
 
-    // Rueckwaerts: die Aufraeumregeln bauen aufeinander auf, ein Stand laesst
-    // sich nur vorwaerts herstellen. Also von vorn nachspielen.
+    // Rückwärts: die Aufräumregeln bauen aufeinander auf, ein Stand lässt
+    // sich nur vorwärts herstellen. Also von vorn nachspielen.
     if (composed_ > static_cast<int>(index))
     {
         if (!ClearArea(canvas_.Get(), 0, 0, canvasWidth_, canvasHeight_))
@@ -389,7 +389,7 @@ ComPtr<IWICBitmapSource> GifAnimator::Compose(UINT index, std::wstring& error)
     {
         if (composed_ >= 0 && !ApplyDisposal(static_cast<UINT>(composed_)))
         {
-            error = L"Einzelbild des GIFs konnte nicht aufgeraeumt werden.";
+            error = L"Einzelbild des GIFs konnte nicht aufgeräumt werden.";
             return nullptr;
         }
 
@@ -407,6 +407,6 @@ ComPtr<IWICBitmapSource> GifAnimator::Compose(UINT index, std::wstring& error)
 
     // Ohne Zwischenspeicher wird die laufende Leinwand selbst herausgereicht.
     // Sie wandert sofort in eine Direct2D-Bitmap; erst danach schreibt der
-    // naechste Frame wieder hinein.
+    // nächste Frame wieder hinein.
     return canvas_;
 }

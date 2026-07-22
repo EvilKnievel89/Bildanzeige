@@ -1,20 +1,20 @@
-// Was kommt beim Drucken tatsaechlich heraus?
+// Was kommt beim Drucken tatsächlich heraus?
 //
 //     drucken.exe ..\..\testdata\gross.png ..\..\testdata\mehrseitig.tif
 //     drucken.exe -drucker "Microsoft Print to PDF" ..\..\testdata\dreh1.jpg
 //
-// Der Druckweg laesst sich nicht von Hand nachrechnen: was ein Treiber als
-// bedruckbaren Bereich meldet und wie weit der vom Blattrand absteht, weiss
+// Der Druckweg lässt sich nicht von Hand nachrechnen: was ein Treiber als
+// bedruckbaren Bereich meldet und wie weit der vom Blattrand absteht, weiß
 // man erst, wenn man ihn fragt. Dieses Programm fragt jeden eingerichteten
 // Drucker, rechnet dann mit *derselben* Funktion, die auch wirklich druckt
-// (PrintPageToDC aus src/Printer.cpp), und prueft drei Dinge nach:
+// (PrintPageToDC aus src/Printer.cpp), und prüft drei Dinge nach:
 //
-//   1. die Geraetemasse -- Beleg fuer den unsymmetrischen Rand, um dessen
+//   1. die Gerätemaße -- Beleg für den unsymmetrischen Rand, um dessen
 //      willen auf dem Blatt zentriert wird und nicht im bedruckbaren Bereich
-//   2. einen echten Auftrag nach PDF: Seitenverhaeltnis, Lage, Zentrierung
-//   3. den weissen Grund: eine halb durchsichtige Vorlage durch denselben
+//   2. einen echten Auftrag nach PDF: Seitenverhältnis, Lage, Zentrierung
+//   3. den weißen Grund: eine halb durchsichtige Vorlage durch denselben
 //      Weg geschickt und hinterher nachgesehen, ob aus dem Durchsichtigen
-//      Weiss geworden ist und nicht Schwarz
+//      Weiß geworden ist und nicht Schwarz
 //
 // PLAN.md, Abschnitt 9.
 
@@ -64,10 +64,10 @@ namespace
         return namen;
     }
 
-    // Teil 1: was die Geraete ueber sich sagen.
+    // Teil 1: was die Geräte über sich sagen.
     void ZeigeGeraete(const std::vector<std::wstring>& namen)
     {
-        wprintf(L"\n  Geraetemasse (Punkte des Geraets)\n");
+        wprintf(L"\n  Gerätemaße (Punkte des Geräts)\n");
         wprintf(L"  %-34s %5s %11s %11s %9s\n", L"Drucker", L"dpi", L"Blatt", L"bedruckbar",
                 L"Rand l/o");
         for (const std::wstring& name : namen)
@@ -75,7 +75,7 @@ namespace
             HDC dc = CreateDCW(nullptr, name.c_str(), nullptr, nullptr);
             if (dc == nullptr)
             {
-                wprintf(L"  %-34s  (kein Geraetekontext)\n", name.c_str());
+                wprintf(L"  %-34s  (kein Gerätekontext)\n", name.c_str());
                 continue;
             }
 
@@ -90,7 +90,7 @@ namespace
 
             // Der Rand rechts und unten ergibt sich aus dem Rest. Sind die
             // beiden Zahlenpaare verschieden, ist der Rand unsymmetrisch --
-            // genau der Fall, fuer den FitOnSheet auf dem Blatt zentriert.
+            // genau der Fall, für den FitOnSheet auf dem Blatt zentriert.
             if (sheetW > 0 && sheetH > 0)
             {
                 const int restX = sheetW - areaW - offX;
@@ -103,7 +103,7 @@ namespace
         }
     }
 
-    // Teil 2: ein echter Auftrag, Seite fuer Seite nachgemessen.
+    // Teil 2: ein echter Auftrag, Seite für Seite nachgemessen.
     void PruefeAuftrag(IWICImagingFactory* wic, const std::wstring& drucker,
                        const std::wstring& datei, int drehung, const std::wstring& ziel)
     {
@@ -116,7 +116,7 @@ namespace
         ImageDocument dokument;
         if (!dokument.Open(wic, datei, meldung))
         {
-            wprintf(L"    oeffnen fehlgeschlagen: %s\n", meldung.c_str());
+            wprintf(L"    öffnen fehlgeschlagen: %s\n", meldung.c_str());
             fehler++;
             return;
         }
@@ -124,7 +124,7 @@ namespace
         HDC dc = CreateDCW(nullptr, drucker.c_str(), nullptr, nullptr);
         if (dc == nullptr)
         {
-            wprintf(L"    kein Geraetekontext fuer \"%s\"\n", drucker.c_str());
+            wprintf(L"    kein Gerätekontext für \"%s\"\n", drucker.c_str());
             fehler++;
             return;
         }
@@ -145,7 +145,7 @@ namespace
 
         DOCINFOW info{};
         info.cbSize = sizeof(info);
-        info.lpszDocName = L"Bildanzeige-Pruefung";
+        info.lpszDocName = L"Bildanzeige-Prüfung";
         info.lpszOutput = ziel.c_str();   // ohne das fragte der PDF-Treiber nach dem Namen
 
         if (StartDocW(dc, &info) <= 0)
@@ -187,18 +187,18 @@ namespace
             wprintf(L"    Seite %u: %5u x %-5u  ->  %d x %d  bei (%d, %d)\n", seite + 1, bildW,
                     bildH, platz.width, platz.height, platz.x, platz.y);
 
-            // Seitenverhaeltnis: das Bild darf nicht verzerrt aufs Blatt.
+            // Seitenverhältnis: das Bild darf nicht verzerrt aufs Blatt.
             const double sollte = static_cast<double>(bildW) / bildH;
             const double ist = static_cast<double>(platz.width) / platz.height;
-            Pruefe(std::fabs(sollte - ist) / sollte < 0.002, L"Seitenverhaeltnis bleibt erhalten");
+            Pruefe(std::fabs(sollte - ist) / sollte < 0.002, L"Seitenverhältnis bleibt erhalten");
 
-            // Es muss ausgefuellt sein: eine Kante beruehrt den Rand.
+            // Es muss ausgefüllt sein: eine Kante berührt den Rand.
             Pruefe(platz.width == areaW || platz.height == areaH,
-                   L"eingepasst -- eine Kante stoesst an den bedruckbaren Rand");
+                   L"eingepasst -- eine Kante stößt an den bedruckbaren Rand");
 
             Pruefe(platz.x >= 0 && platz.y >= 0 && platz.x + platz.width <= areaW &&
                        platz.y + platz.height <= areaH,
-                   L"liegt vollstaendig im bedruckbaren Bereich");
+                   L"liegt vollständig im bedruckbaren Bereich");
 
             // Zentriert auf dem *Blatt*: die Mitte des Bildes muss auf der
             // Mitte des Blattes liegen, nicht auf der des bedruckbaren
@@ -218,25 +218,25 @@ namespace
         DeleteDC(dc);
     }
 
-    // Teil 3: der weisse Grund.
+    // Teil 3: der weiße Grund.
     //
-    // Gezeichnet wird in eine Metadatei mit dem Drucker als Bezugsgeraet --
-    // PrintPageToDC rechnet also mit den echten Massen des Geraets --, und die
-    // Metadatei wird hinterher in eine Bitmap zurueckgespielt. Erst dadurch
+    // Gezeichnet wird in eine Metadatei mit dem Drucker als Bezugsgerät --
+    // PrintPageToDC rechnet also mit den echten Maßen des Geräts --, und die
+    // Metadatei wird hinterher in eine Bitmap zurückgespielt. Erst dadurch
     // sind die Punkte zu sehen, die sonst im Treiber verschwinden.
     void PruefeWeissenGrund(IWICImagingFactory* wic, const std::wstring& drucker)
     {
-        wprintf(L"\n  Weisser Grund unter Durchsichtigem\n");
+        wprintf(L"\n  Weißer Grund unter Durchsichtigem\n");
 
-        // Vorlage: links deckendes Rot, rechts voellig durchsichtig. In
+        // Vorlage: links deckendes Rot, rechts völlig durchsichtig. In
         // vormultiplizierten Werten steht rechts lauter Null -- ohne das
-        // Unterlegen kaeme dort Schwarz heraus.
+        // Unterlegen käme dort Schwarz heraus.
         constexpr UINT breite = 200, hoehe = 100;
         ComPtr<IWICBitmap> vorlage;
         if (FAILED(wic->CreateBitmap(breite, hoehe, GUID_WICPixelFormat32bppPBGRA,
                                      WICBitmapCacheOnLoad, &vorlage)))
         {
-            wprintf(L"    Vorlage liess sich nicht anlegen\n");
+            wprintf(L"    Vorlage ließ sich nicht anlegen\n");
             fehler++;
             return;
         }
@@ -269,14 +269,14 @@ namespace
         HDC bezug = CreateDCW(nullptr, drucker.c_str(), nullptr, nullptr);
         if (bezug == nullptr)
         {
-            wprintf(L"    kein Geraetekontext fuer \"%s\"\n", drucker.c_str());
+            wprintf(L"    kein Gerätekontext für \"%s\"\n", drucker.c_str());
             fehler++;
             return;
         }
 
         // Ohne den Rahmen setzt GDI ihn auf die Umrisse des Gezeichneten, und
-        // das Bild fuellte beim Abspielen die ganze Zielflaeche -- die Lage auf
-        // dem Blatt waere weg. Am magentafarbenen Rest unten ist zu sehen, dass
+        // das Bild füllte beim Abspielen die ganze Zielfläche -- die Lage auf
+        // dem Blatt wäre weg. Am magentafarbenen Rest unten ist zu sehen, dass
         // sie erhalten bleibt.
         const RECT rahmen = PrintMetafileFrame(bezug);
         HDC meta = CreateEnhMetaFileW(bezug, nullptr, &rahmen, nullptr);
@@ -297,9 +297,9 @@ namespace
             return;
         }
 
-        // Zuruecklesen: die Aufzeichnung in eine kleine Bitmap abspielen. Der
-        // Grund wird vorher magenta gefaerbt -- so ist "nicht bemalt" von
-        // "weiss bemalt" zu unterscheiden.
+        // Zurücklesen: die Aufzeichnung in eine kleine Bitmap abspielen. Der
+        // Grund wird vorher magenta gefärbt -- so ist "nicht bemalt" von
+        // "weiß bemalt" zu unterscheiden.
         constexpr int zielB = 600, zielH = 800;
         BITMAPINFO bi{};
         bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
@@ -324,7 +324,7 @@ namespace
         PlayEnhMetaFile(speicher, aufzeichnung, &ziel);
         GdiFlush();
 
-        int rot = 0, weiss = 0, schwarz = 0, magenta = 0;
+        int rot = 0, weiß = 0, schwarz = 0, magenta = 0;
         for (int i = 0; i < zielB * zielH; i++)
         {
             const BYTE b = static_cast<BYTE*>(punkte)[i * 4 + 0];
@@ -333,22 +333,22 @@ namespace
             if (r > 200 && g < 60 && b < 60)
                 rot++;
             else if (r > 240 && g > 240 && b > 240)
-                weiss++;
+                weiß++;
             else if (r < 40 && g < 40 && b < 40)
                 schwarz++;
             else if (r > 200 && b > 200 && g < 60)
                 magenta++;
         }
-        wprintf(L"    rot %d   weiss %d   schwarz %d   unbemalt %d\n", rot, weiss, schwarz,
+        wprintf(L"    rot %d   weiß %d   schwarz %d   unbemalt %d\n", rot, weiß, schwarz,
                 magenta);
 
         Pruefe(schwarz == 0, L"kein einziger schwarzer Punkt -- das Durchsichtige wurde "
                              L"unterlegt");
-        Pruefe(weiss > 0 && rot > 0, L"beide Haelften sind angekommen");
-        Pruefe(rot > 0 && std::abs(rot - weiss) < rot / 5,
-               L"die durchsichtige Haelfte ist so gross wie die deckende");
+        Pruefe(weiß > 0 && rot > 0, L"beide Hälften sind angekommen");
+        Pruefe(rot > 0 && std::abs(rot - weiß) < rot / 5,
+               L"die durchsichtige Hälfte ist so groß wie die deckende");
         Pruefe(magenta > 0, L"unbemalter Rest vorhanden -- die Einpassung ist nicht "
-                            L"aufgeblaeht worden");
+                            L"aufgebläht worden");
 
         SelectObject(speicher, vorher);
         DeleteObject(flaeche);
@@ -395,10 +395,10 @@ int wmain(int argc, wchar_t** argv)
         CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER,
                          IID_PPV_ARGS(&wic));
 
-        wprintf(L"\n  Auftraege an \"%s\"\n", drucker.c_str());
+        wprintf(L"\n  Aufträge an \"%s\"\n", drucker.c_str());
         for (size_t i = 0; i < dateien.size(); i++)
         {
-            // Die letzte Datei wird gedreht gedruckt -- damit laeuft auch der
+            // Die letzte Datei wird gedreht gedruckt -- damit läuft auch der
             // Weg durch den IWICBitmapFlipRotator einmal mit.
             const int drehung = (i + 1 == dateien.size()) ? 1 : 0;
             PruefeAuftrag(wic.Get(), drucker, dateien[i], drehung,

@@ -1,15 +1,15 @@
-// Sucht eine Beschaedigung, die WIC wirklich nicht mehr verzeiht.
+// Sucht eine Beschädigung, die WIC wirklich nicht mehr verzeiht.
 //
 //     brechen.exe ..\..\testdata\gross.png ..\..\testdata\dreh1.jpg
 //
-// Abschneiden genuegt nicht: das JPEG meldet "premature end of data segment"
+// Abschneiden genügt nicht: das JPEG meldet "premature end of data segment"
 // und liefert die Pixel trotzdem, das PNG ebenso. Hier werden stattdessen
-// Bytes mitten im Datenstrom verfaelscht -- bei PNG bricht dann die
-// Pruefsumme des Blocks, bei JPEG der Huffman-Strom.
+// Bytes mitten im Datenstrom verfälscht -- bei PNG bricht dann die
+// Prüfsumme des Blocks, bei JPEG der Huffman-Strom.
 //
-// Das Ergebnis ist die Pointe: auch das reicht nicht. Alle sechs Faelle kommen
+// Das Ergebnis ist die Pointe: auch das reicht nicht. Alle sechs Fälle kommen
 // ohne Fehler durch. Wer im Hintergrund-Thread auf WINCODEC_ERR_BADIMAGE
-// wartet, wartet lange -- was den Fehlerweg wirklich ausloest, ist ein Pfad,
+// wartet, wartet lange -- was den Fehlerweg wirklich auslöst, ist ein Pfad,
 // der verschwindet (PLAN.md, Abschnitt 7).
 
 #include <windows.h>
@@ -51,14 +51,14 @@ namespace
         return written == data.size();
     }
 
-    // Genau der Ablauf des Hintergrund-Threads: oeffnen, Frame holen, umwandeln,
+    // Genau der Ablauf des Hintergrund-Threads: öffnen, Frame holen, umwandeln,
     // Pixel in den Speicher ziehen.
     const wchar_t* Try(const wchar_t* path, HRESULT& where)
     {
         ComPtr<IWICBitmapDecoder> decoder;
         where = g_factory->CreateDecoderFromFilename(path, nullptr, GENERIC_READ,
                                                      WICDecodeMetadataCacheOnDemand, &decoder);
-        if (FAILED(where)) return L"oeffnen";
+        if (FAILED(where)) return L"öffnen";
 
         ComPtr<IWICBitmapFrameDecode> frame;
         where = decoder->GetFrame(0, &frame);

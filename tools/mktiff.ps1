@@ -1,12 +1,12 @@
-# Die beiden TIFFs:
+﻿# Die beiden TIFFs:
 #
 #   mehrseitig.tif  3 Seiten zu 900x600, 400x900 und 1400x500 -- die
 #                   Einpassung muss je Seite neu rechnen
 #   fax.tif         2 Seiten, 1 bpp CCITT G4 -- ohne Formatwandlung unsichtbar
 #
-# Geschrieben wird in den mitgegebenen Ordner, standardmaessig testdata neben
-# diesem Verzeichnis. GDI+ statt WIC, weil dessen TIFF-Encoder das Anhaengen
-# weiterer Seiten (SaveAdd) ohne Umstaende beherrscht.
+# Geschrieben wird in den mitgegebenen Ordner, standardmäßig testdata neben
+# diesem Verzeichnis. GDI+ statt WIC, weil dessen TIFF-Encoder das Anhängen
+# weiterer Seiten (SaveAdd) ohne Umstände beherrscht.
 
 param(
     [string]$Ziel = (Join-Path (Split-Path $PSScriptRoot -Parent) "testdata")
@@ -53,7 +53,7 @@ $PAGE  = [System.Drawing.Imaging.EncoderValue]::FrameDimensionPage
 $FLUSH = [System.Drawing.Imaging.EncoderValue]::Flush
 $CCITT4 = [System.Drawing.Imaging.EncoderValue]::CompressionCCITT4
 
-# --- 1) Mehrseitiges Farb-TIFF mit UNTERSCHIEDLICHEN Seitengroessen ---------
+# --- 1) Mehrseitiges Farb-TIFF mit UNTERSCHIEDLICHEN Seitengrößen ---------
 $specs = @(
     @{ w = 900; h = 600; t = "Seite 1`n900 x 600" },
     @{ w = 400; h = 900; t = "Seite 2`n400 x 900" },
@@ -68,7 +68,7 @@ $pages[0].Save($path, $codec, (New-EP $MULTI $null))
 for ($i = 1; $i -lt $pages.Count; $i++) { $pages[0].SaveAdd($pages[$i], (New-EP $PAGE $null)) }
 $pages[0].SaveAdd((New-EP $FLUSH $null))
 $pages | ForEach-Object { $_.Dispose() }
-Write-Output "mehrseitig.tif  -> 3 Seiten, verschiedene Groessen"
+Write-Output "mehrseitig.tif  -> 3 Seiten, verschiedene Größen"
 
 # --- 2) Fax-TIFF: 1 bpp, CCITT Group 4, 2 Seiten ---------------------------
 $faxPages = @()

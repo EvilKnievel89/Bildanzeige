@@ -8,5 +8,5 @@
 template <class T>
 using ComPtr = Microsoft::WRL::ComPtr<T>;
 
-// Systemmeldung zu einem HRESULT, fuer Fehlertexte in der UI.
+// Systemmeldung zu einem HRESULT, für Fehlertexte in der UI.
 std::wstring FormatHResult(HRESULT hr);

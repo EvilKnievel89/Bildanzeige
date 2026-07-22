@@ -1,19 +1,19 @@
 // Welche Formate kann dieser Rechner lesen -- und welche nur auf dem Papier?
 //
-// Zaehlt die registrierten WIC-Decoder mit Namen und Dateiendungen auf. Daraus
+// Zählt die registrierten WIC-Decoder mit Namen und Dateiendungen auf. Daraus
 // stammt die Tabelle in PLAN.md, Abschnitt 1 -- und die Aussage, dass ein
 // nachinstalliertes Format von selbst in der Ordnerliste erscheint: die
 // Anwendung fragt zur Laufzeit dieselbe Liste ab.
 //
-// Jeder Decoder wird zusaetzlich einmal probeweise erzeugt. Angemeldet heisst
-// naemlich nicht vorhanden: WebP, HEIF, AVIF und JPEG XL meldet Windows selbst
+// Jeder Decoder wird zusätzlich einmal probeweise erzeugt. Angemeldet heißt
+// nämlich nicht vorhanden: WebP, HEIF, AVIF und JPEG XL meldet Windows selbst
 // an, geliefert werden sie aber von Erweiterungen aus dem Microsoft Store.
 // Fehlt eine, bleibt der Eintrag stehen und erst das Erzeugen scheitert -- mit
 // WINCODEC_ERR_COMPONENTINITIALIZEFAILURE (0x88982F8B). Genau das ist der Fall,
 // den man auf einem Windows Server ohne Store vor sich hat.
 //
 // Ein nicht erzeugbarer Decoder ist keine Beanstandung, sondern ein Befund
-// ueber diesen Rechner; der Rueckgabewert bleibt deshalb 0.
+// über diesen Rechner; der Rückgabewert bleibt deshalb 0.
 
 #include <windows.h>
 #include <wincodec.h>

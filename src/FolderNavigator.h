@@ -7,14 +7,14 @@
 #include <string>
 #include <vector>
 
-// Die anzeigbaren Dateien im selben Ordner, natuerlich sortiert.
+// Die anzeigbaren Dateien im selben Ordner, natürlich sortiert.
 //
-// Die Liste ist eine Momentaufnahme: sie entsteht beim Oeffnen und wird erst
+// Die Liste ist eine Momentaufnahme: sie entsteht beim Öffnen und wird erst
 // wieder eingelesen, wenn eine Datei aus einem anderen Ordner kommt. Einen
 // Ordner mit mehreren tausend Dateien bei jedem Bildwechsel neu einzulesen
-// waere spuerbar, und waehrend man Bilder ansieht aendert er sich in aller
-// Regel nicht. Was inzwischen doch verschwunden ist, faellt beim Ansteuern auf
-// und wird uebersprungen -- siehe Drop().
+// wäre spürbar, und während man Bilder ansieht ändert er sich in aller
+// Regel nicht. Was inzwischen doch verschwunden ist, fällt beim Ansteuern auf
+// und wird übersprungen -- siehe Drop().
 class FolderNavigator
 {
 public:
@@ -23,8 +23,8 @@ public:
     void Track(IWICImagingFactory* factory, const std::wstring& path);
     void Clear();
 
-    // Erste anzeigbare Datei eines Ordners -- fuer den Fall, dass ein Ordner
-    // uebergeben oder auf das Fenster gezogen wird. Leer, wenn keine drin ist.
+    // Erste anzeigbare Datei eines Ordners -- für den Fall, dass ein Ordner
+    // übergeben oder auf das Fenster gezogen wird. Leer, wenn keine drin ist.
     std::wstring FirstIn(IWICImagingFactory* factory, const std::wstring& folder);
 
     size_t Count() const { return files_.size(); }
@@ -45,7 +45,7 @@ private:
 
     std::vector<std::wstring> extensions_;   // klein geschrieben, mit Punkt
     std::vector<std::wstring> files_;        // nur Dateinamen
-    std::wstring folder_;                    // mit abschliessendem Trennzeichen
+    std::wstring folder_;                    // mit abschließendem Trennzeichen
     size_t index_ = 0;
     bool scanned_ = false;
 };

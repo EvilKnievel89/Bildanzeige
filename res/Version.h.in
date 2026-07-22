@@ -1,9 +1,9 @@
 #pragma once
 
-// Von CMake erzeugt -- nicht von Hand aendern. Die Vorlage ist
+// Von CMake erzeugt -- nicht von Hand ändern. Die Vorlage ist
 // res/Version.h.in, die Nummer selbst steht allein in der project()-Zeile der
 // CMakeLists.txt. Vorher stand sie doppelt: dort und in der Ressourcendatei.
-// Zwei Stellen fuer dieselbe Zahl sind eine Stelle zu viel -- die zweite wird
+// Zwei Stellen für dieselbe Zahl sind eine Stelle zu viel -- die zweite wird
 // vergessen, und die EXE gibt sich hinterher als eine andere Fassung aus, als
 // sie ist.
 

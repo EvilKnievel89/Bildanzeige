@@ -6,8 +6,8 @@
 
 #include <string>
 
-// Eine geoeffnete Bilddatei. Der Decoder bleibt offen, Frames werden einzeln
-// nachgeladen -- bei mehrseitigen TIFFs waere es Verschwendung, alles zu halten.
+// Eine geöffnete Bilddatei. Der Decoder bleibt offen, Frames werden einzeln
+// nachgeladen -- bei mehrseitigen TIFFs wäre es Verschwendung, alles zu halten.
 class ImageDocument
 {
 public:
@@ -20,12 +20,12 @@ public:
 
     // Startdrehung in Vierteln aus der EXIF-Orientierung (Tag 274), damit ein
     // hochkant gehaltenes Foto auch hochkant erscheint. Gelesen wird sie an
-    // Frame 0 und gilt fuer die ganze Datei: eine Drehung von Hand soll den
-    // Seitenwechsel ueberdauern, und das ginge nicht, wenn jede Seite ihre
+    // Frame 0 und gilt für die ganze Datei: eine Drehung von Hand soll den
+    // Seitenwechsel überdauern, und das ginge nicht, wenn jede Seite ihre
     // eigene Startdrehung durchsetzte.
     int OrientationQuarters() const { return orientation_; }
 
-    // Fuer die Metadaten, die nur am Container haengen -- etwa die logische
+    // Für die Metadaten, die nur am Container hängen -- etwa die logische
     // Leinwand und die Wiederholungen eines GIFs.
     IWICBitmapDecoder* Decoder() const { return decoder_.Get(); }
 

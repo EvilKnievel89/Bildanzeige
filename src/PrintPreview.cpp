@@ -14,15 +14,15 @@ namespace
     constexpr wchar_t kPreviewClass[] = L"BildanzeigePrintPreview";
     constexpr wchar_t kAppTitle[] = L"Bildanzeige";
 
-    // Feinheit, mit der das Blatt fuer die Ansicht gezeichnet wird. In
-    // Druckaufloesung zu rechnen kostete bei einem grossen Scan Sekunden und
+    // Feinheit, mit der das Blatt für die Ansicht gezeichnet wird. In
+    // Druckauflösung zu rechnen kostete bei einem großen Scan Sekunden und
     // zeigte am Schirm keinen Punkt mehr; 150 dpi ergeben bei A4 rund
-    // 1240 x 1754 Punkte und reichen fuer jede Fenstergroesse, die auf einen
+    // 1240 x 1754 Punkte und reichen für jede Fenstergröße, die auf einen
     // Schirm passt. Feste Zahl statt einer aus dem Fenster errechneten: sonst
-    // muesste bei jedem Ziehen am Rahmen neu dekodiert werden.
+    // müsste bei jedem Ziehen am Rahmen neu dekodiert werden.
     constexpr int kPreviewDpi = 150;
 
-    // Masse in DIP, auf die DPI-Stufe des Fensters hochgerechnet.
+    // Maße in DIP, auf die DPI-Stufe des Fensters hochgerechnet.
     constexpr int kInitialWidth = 640;
     constexpr int kInitialHeight = 820;
     constexpr int kBarHeight = 46;
@@ -52,14 +52,14 @@ namespace
         IWICImagingFactory* wic = nullptr;
         std::wstring printer;
 
-        HDC printerDC = nullptr;      // Bezugsgeraet der Metadatei
+        HDC printerDC = nullptr;      // Bezugsgerät der Metadatei
         HENHMETAFILE page = nullptr;  // die aufgezeichnete Seite
         std::wstring pageError;       // leer, solange die Seite steht
 
         UINT pageIndex = 0;
         UINT pageCount = 1;
 
-        int sheetWidth = 0;      // Blatt in Punkten des Geraets
+        int sheetWidth = 0;      // Blatt in Punkten des Geräts
         int sheetHeight = 0;
         int areaWidth = 0;       // bedruckbarer Bereich, ebenso
         int areaHeight = 0;
@@ -92,8 +92,8 @@ namespace
         return name;
     }
 
-    // Die gezeigte Seite in eine Metadatei zeichnen. Bezugsgeraet ist der
-    // Drucker: PrintPageToDC rechnet dadurch mit dessen wirklichen Massen, und
+    // Die gezeigte Seite in eine Metadatei zeichnen. Bezugsgerät ist der
+    // Drucker: PrintPageToDC rechnet dadurch mit dessen wirklichen Maßen, und
     // der Rahmen der Aufzeichnung ist genau sein bedruckbarer Bereich.
     void RecordPage(Preview& preview)
     {
@@ -117,7 +117,7 @@ namespace
         HDC meta = CreateEnhMetaFileW(preview.printerDC, nullptr, &frame, nullptr);
         if (meta == nullptr)
         {
-            preview.pageError = L"Die Seite liess sich nicht aufzeichnen.";
+            preview.pageError = L"Die Seite ließ sich nicht aufzeichnen.";
             return;
         }
 
@@ -130,7 +130,7 @@ namespace
             if (recorded != nullptr)
                 DeleteEnhMetaFile(recorded);
             if (preview.pageError.empty())
-                preview.pageError = L"Die Seite liess sich nicht aufzeichnen.";
+                preview.pageError = L"Die Seite ließ sich nicht aufzeichnen.";
             return;
         }
         preview.page = recorded;
@@ -163,7 +163,7 @@ namespace
     // Wo das Blatt im Fenster liegt und wo darin der bedruckbare Bereich.
     // Beides wird gebraucht: die Aufzeichnung kennt nur den bedruckbaren
     // Bereich -- ihr Rahmen ist genau er --, gezeigt werden soll aber das ganze
-    // Blatt samt dem Rand, den das Geraet nicht erreicht.
+    // Blatt samt dem Rand, den das Gerät nicht erreicht.
     void SheetRects(const Preview& preview, const RECT& client, RECT& sheet, RECT& printable)
     {
         sheet = RECT{ 0, 0, 0, 0 };
@@ -194,8 +194,8 @@ namespace
     void PaintPreview(Preview& preview, HDC target, const RECT& client)
     {
         // Doppelt gepuffert: das Blatt, die Aufzeichnung und der Rahmen sind
-        // drei Durchgaenge, und ohne Zwischenbild flackerte es bei jeder
-        // Groessenaenderung.
+        // drei Durchgänge, und ohne Zwischenbild flackerte es bei jeder
+        // Größenänderung.
         HDC buffer = CreateCompatibleDC(target);
         HBITMAP surface = CreateCompatibleBitmap(target, client.right, client.bottom);
         HGDIOBJ previousBitmap = SelectObject(buffer, surface);
@@ -217,8 +217,8 @@ namespace
             if (preview.page != nullptr)
             {
                 // Auf den Platz des bedruckbaren Bereichs gespielt, nicht auf
-                // das ganze Blatt: der unbedruckbare Rand bleibt weiss stehen,
-                // und genau so kommt es aus dem Geraet.
+                // das ganze Blatt: der unbedruckbare Rand bleibt weiß stehen,
+                // und genau so kommt es aus dem Gerät.
                 PlayEnhMetaFile(buffer, preview.page, &printable);
             }
             FrameRect(buffer, &sheet, GetSysColorBrush(COLOR_WINDOWFRAME));
@@ -256,7 +256,7 @@ namespace
     void LayoutBar(Preview& preview)
     {
         if (preview.previous == nullptr || preview.close == nullptr)
-            return;   // WM_SIZE trifft schon ein, bevor die Knoepfe stehen.
+            return;   // WM_SIZE trifft schon ein, bevor die Knöpfe stehen.
 
         RECT client{};
         GetClientRect(preview.hwnd, &client);
@@ -283,8 +283,8 @@ namespace
 
         preview.pageIndex = static_cast<UINT>(target);
 
-        // Eine neue Seite heisst: neu dekodieren. Bei einem grossen Scan dauert
-        // das, und ohne die Sanduhr saehe es aus, als sei der Klick verloren.
+        // Eine neue Seite heißt: neu dekodieren. Bei einem großen Scan dauert
+        // das, und ohne die Sanduhr sähe es aus, als sei der Klick verloren.
         const HCURSOR busy = SetCursor(LoadCursorW(nullptr, IDC_WAIT));
         RecordPage(preview);
         SetCursor(busy);
@@ -313,10 +313,10 @@ namespace
         case kIdPrint:
         {
             // Besitzer des Druckdialogs ist die Ansicht, nicht das Hauptfenster:
-            // das ist gesperrt, und ein Dialog davor stuende ohne Bezug da.
+            // das ist gesperrt, und ein Dialog davor stünde ohne Bezug da.
             //
             // Die Seite, die gerade gezeigt wird, geht als die aktuelle in den
-            // Auftrag -- wer bis Seite 3 geblaettert hat, meint diese.
+            // Auftrag -- wer bis Seite 3 geblättert hat, meint diese.
             PrintJob started = *preview.job;
             started.currentPage = preview.pageIndex;
             preview.outcome = PrintImage(preview.hwnd, preview.wic, started, *preview.error);
@@ -358,7 +358,7 @@ namespace
         }
 
         case WM_ERASEBKGND:
-            return 1;   // Verhindert Flackern; PaintPreview fuellt die Flaeche.
+            return 1;   // Verhindert Flackern; PaintPreview füllt die Fläche.
 
         case WM_SIZE:
             LayoutBar(*preview);
@@ -367,7 +367,7 @@ namespace
 
         case WM_COMMAND:
             // Ein Knopf *sendet* seine Meldung an das Elternfenster; in der
-            // Nachrichtenschleife kaeme sie nie an.
+            // Nachrichtenschleife käme sie nie an.
             OnCommand(*preview, LOWORD(wParam));
             return 0;
 
@@ -412,7 +412,7 @@ namespace
         case VK_RETURN:
         {
             // Ohne Dialogvorlage gibt es keinen Standardknopf, den die
-            // Eingabetaste von selbst faende -- sie wird deshalb von Hand auf
+            // Eingabetaste von selbst fände -- sie wird deshalb von Hand auf
             // den Knopf gelegt, der gerade den Fokus hat.
             const HWND focus = GetFocus();
             int id = kIdPrint;
@@ -437,7 +437,7 @@ PrintOutcome ShowPrintPreview(HWND owner, IWICImagingFactory* wic, const PrintJo
 {
     if (wic == nullptr || job.document == nullptr || !job.document->IsOpen())
     {
-        error = L"Es ist kein Bild geoeffnet.";
+        error = L"Es ist kein Bild geöffnet.";
         return PrintOutcome::Failed;
     }
 
@@ -458,7 +458,7 @@ PrintOutcome ShowPrintPreview(HWND owner, IWICImagingFactory* wic, const PrintJo
     preview.printerDC = CreateDCW(nullptr, preview.printer.c_str(), nullptr, nullptr);
     if (preview.printerDC == nullptr)
     {
-        error = L"Der Drucker \"" + preview.printer + L"\" liefert keinen Geraetekontext.";
+        error = L"Der Drucker \"" + preview.printer + L"\" liefert keinen Gerätekontext.";
         return PrintOutcome::Failed;
     }
 
@@ -501,7 +501,7 @@ PrintOutcome ShowPrintPreview(HWND owner, IWICImagingFactory* wic, const PrintJo
         if (RegisterClassExW(&wc) == 0)
         {
             DeleteDC(preview.printerDC);
-            error = L"Die Seitenansicht liess sich nicht anlegen.";
+            error = L"Die Seitenansicht ließ sich nicht anlegen.";
             return PrintOutcome::Failed;
         }
     }
@@ -517,13 +517,13 @@ PrintOutcome ShowPrintPreview(HWND owner, IWICImagingFactory* wic, const PrintJo
     if (preview.hwnd == nullptr)
     {
         DeleteDC(preview.printerDC);
-        error = L"Die Seitenansicht liess sich nicht anlegen.";
+        error = L"Die Seitenansicht ließ sich nicht anlegen.";
         return PrintOutcome::Failed;
     }
 
-    // Groesse erst jetzt, aus demselben Grund wie beim Hauptfenster: fest in
-    // Pixeln angegeben waere das Fenster bei 150 % nur zwei Drittel so gross
-    // wie gemeint. Gesetzt wird es mittig ueber dem Hauptfenster.
+    // Größe erst jetzt, aus demselben Grund wie beim Hauptfenster: fest in
+    // Pixeln angegeben wäre das Fenster bei 150 % nur zwei Drittel so groß
+    // wie gemeint. Gesetzt wird es mittig über dem Hauptfenster.
     RECT desired = { 0, 0, Scaled(preview, kInitialWidth), Scaled(preview, kInitialHeight) };
     if (AdjustWindowRectExForDpi(&desired, WS_OVERLAPPEDWINDOW, FALSE, WS_EX_DLGMODALFRAME,
                                  preview.dpi))
@@ -551,8 +551,8 @@ PrintOutcome ShowPrintPreview(HWND owner, IWICImagingFactory* wic, const PrintJo
     };
     // Die Beschriftungen stehen als Zeichen da, nicht als \x-Folgen: eine
     // Hexfolge im Zeichenkettenliteral frisst so viele Ziffern, wie sie
-    // bekommen kann -- aus "\x00DFen" wuerde ein einzelnes Zeichen 0x0DFE und
-    // aus "Schließen" ein Kaestchen. Uebersetzt wird ohnehin mit /utf-8.
+    // bekommen kann -- aus "\x00DFen" würde ein einzelnes Zeichen 0x0DFE und
+    // aus "Schließen" ein Kästchen. Übersetzt wird ohnehin mit /utf-8.
     const ButtonSpec specs[] = {
         { L"‹", kIdPrevious, &preview.previous, 0 },
         { L"›", kIdNext, &preview.next, 0 },
@@ -569,7 +569,7 @@ PrintOutcome ShowPrintPreview(HWND owner, IWICImagingFactory* wic, const PrintJo
             SendMessageW(*spec.target, WM_SETFONT, reinterpret_cast<WPARAM>(preview.font), TRUE);
     }
 
-    // Bei einer einzelnen Seite gibt es nichts zu blaettern; die Schrittknoepfe
+    // Bei einer einzelnen Seite gibt es nichts zu blättern; die Schrittknöpfe
     // bleiben fort, statt dauerhaft grau dazustehen -- dieselbe Regel wie in
     // der Icon-Leiste des Hauptfensters.
     if (preview.pageCount <= 1)
@@ -583,10 +583,10 @@ PrintOutcome ShowPrintPreview(HWND owner, IWICImagingFactory* wic, const PrintJo
     UpdateTitle(preview);
     UpdateButtons(preview);
 
-    // Von Hand modal: das Hauptfenster wird gesperrt, und die Schleife laeuft,
-    // bis die Ansicht geschlossen ist. Ein Dialog aus Ressourcen waere der
-    // uebliche Weg, brauchte aber eine Vorlagendatei fuer ein Fenster, das
-    // seine Flaeche ohnehin selbst zeichnet.
+    // Von Hand modal: das Hauptfenster wird gesperrt, und die Schleife läuft,
+    // bis die Ansicht geschlossen ist. Ein Dialog aus Ressourcen wäre der
+    // übliche Weg, brauchte aber eine Vorlagendatei für ein Fenster, das
+    // seine Fläche ohnehin selbst zeichnet.
     EnableWindow(owner, FALSE);
     ShowWindow(preview.hwnd, SW_SHOW);
     SetFocus(preview.print);
@@ -597,7 +597,7 @@ PrintOutcome ShowPrintPreview(HWND owner, IWICImagingFactory* wic, const PrintJo
         if (msg.message == WM_KEYDOWN && OnKey(preview, msg.wParam))
             continue;
 
-        // IsDialogMessage liefert das Blaettern mit der Tabulatortaste und die
+        // IsDialogMessage liefert das Blättern mit der Tabulatortaste und die
         // Kurztasten der Knopfbeschriftungen (Alt+D, Alt+C).
         if (!IsDialogMessageW(preview.hwnd, &msg))
         {
@@ -616,7 +616,7 @@ PrintOutcome ShowPrintPreview(HWND owner, IWICImagingFactory* wic, const PrintJo
         DeleteObject(preview.font);
     DeleteDC(preview.printerDC);
 
-    // Eine Seite, die sich nicht zeichnen liess, ist eine Meldung wert -- aber
+    // Eine Seite, die sich nicht zeichnen ließ, ist eine Meldung wert -- aber
     // nur, wenn nicht ohnehin gedruckt wurde.
     if (preview.outcome == PrintOutcome::Cancelled && !preview.pageError.empty())
     {

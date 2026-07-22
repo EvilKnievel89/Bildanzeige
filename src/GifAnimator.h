@@ -12,25 +12,25 @@ class ImageDocument;
 // Wiedergabe animierter GIFs.
 //
 // Ein GIF-Frame ist kein fertiges Bild, sondern ein Teilrechteck, das an seiner
-// Position auf eine Leinwand in Groesse von /logscrdesc gehoert -- mit
-// Transparenz und einer Aufraeumregel (Disposal), die bestimmt, was davon fuer
-// den naechsten Frame stehenbleibt. Einzelne Frames direkt anzuzeigen ergaebe
+// Position auf eine Leinwand in Größe von /logscrdesc gehört -- mit
+// Transparenz und einer Aufräumregel (Disposal), die bestimmt, was davon für
+// den nächsten Frame stehenbleibt. Einzelne Frames direkt anzuzeigen ergäbe
 // springende Fragmente.
 //
 // Komponiert wird deshalb immer fortlaufend auf einer laufenden Leinwand; das
-// ist die einzige Reihenfolge, in der die Aufraeumregeln ueberhaupt definiert
-// sind. Ein Ruecksprung heisst: von Frame 0 an nachspielen.
+// ist die einzige Reihenfolge, in der die Aufräumregeln überhaupt definiert
+// sind. Ein Rücksprung heißt: von Frame 0 an nachspielen.
 //
-// Fertige Leinwaende werden dabei nebenbei aufgehoben, solange das Budget
+// Fertige Leinwände werden dabei nebenbei aufgehoben, solange das Budget
 // reicht. Der erste Durchlauf komponiert also, ab dem zweiten wird nur noch
-// abgerufen -- das Oeffnen bleibt schnell, und es wird nur so viel Speicher
+// abgerufen -- das Öffnen bleibt schnell, und es wird nur so viel Speicher
 // belegt, wie auch wirklich gezeigt wurde. Reicht das Budget nicht, kostet ein
-// Ruecksprung dauerhaft einen Neuaufbau.
+// Rücksprung dauerhaft einen Neuaufbau.
 class GifAnimator
 {
 public:
     // Liefert false, wenn es kein animiertes GIF ist -- dann bleibt es beim
-    // gewoehnlichen Seitenbetrieb.
+    // gewöhnlichen Seitenbetrieb.
     bool Load(IWICImagingFactory* factory, const ImageDocument& document);
     void Reset();
 
@@ -40,7 +40,7 @@ public:
     UINT DelayMs(UINT index) const;
     bool Caching() const { return caching_; }
 
-    // Die fertig komponierte Leinwand fuer diesen Frame.
+    // Die fertig komponierte Leinwand für diesen Frame.
     ComPtr<IWICBitmapSource> Compose(UINT index, std::wstring& error);
 
 private:
@@ -65,15 +65,15 @@ private:
 
     ComPtr<IWICImagingFactory> factory_;
 
-    // Zeigt auf das Mitglied von MainWindow und bleibt damit gueltig; die
-    // Frames werden bei Bedarf ueber ImageDocument nachgeladen, statt sie alle
+    // Zeigt auf das Mitglied von MainWindow und bleibt damit gültig; die
+    // Frames werden bei Bedarf über ImageDocument nachgeladen, statt sie alle
     // dekodiert vorzuhalten.
     const ImageDocument* document_ = nullptr;
 
     std::vector<Frame> frames_;
-    std::vector<ComPtr<IWICBitmap>> cache_;   // leer, wenn ueber dem Budget
+    std::vector<ComPtr<IWICBitmap>> cache_;   // leer, wenn über dem Budget
     ComPtr<IWICBitmap> canvas_;
-    ComPtr<IWICBitmap> backup_;               // Sicherung fuer Disposal 3
+    ComPtr<IWICBitmap> backup_;               // Sicherung für Disposal 3
     UINT canvasWidth_ = 0;
     UINT canvasHeight_ = 0;
     UINT loopCount_ = 0;

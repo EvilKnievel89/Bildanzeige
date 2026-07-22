@@ -1,15 +1,15 @@
 // langsam.png -- 60000 x 2000, also 120 Megapixel.
 //
-// Gesucht ist eine Datei, deren Dekodierung ueber 150 ms braucht: erst dann
-// wird der Ladezustand ueberhaupt sichtbar. Ein gleich grosses Quadrat waere
-// dafuer untauglich, weil es einen halben Gigabyte Zielpuffer braeuchte.
+// Gesucht ist eine Datei, deren Dekodierung über 150 ms braucht: erst dann
+// wird der Ladezustand überhaupt sichtbar. Ein gleich großes Quadrat wäre
+// dafür untauglich, weil es einen halben Gigabyte Zielpuffer bräuchte.
 //
 // Diese Form ist umgekehrt gebaut: viele Bildpunkte am Eingang, aber nur 16384
 // Punkte Breite als Textur. WIC zieht die Zeilen durch den Verkleinerer, ohne
 // je das Ganze im Speicher zu halten -- viel Arbeit, wenig Speicher.
 //
 // Erst als CCITT-G4-TIFF versucht: der WIC-Encoder kam bei dieser Zeilenbreite
-// nach zehn Minuten nicht ueber den Dateikopf hinaus. PNG schreibt dieselbe
+// nach zehn Minuten nicht über den Dateikopf hinaus. PNG schreibt dieselbe
 // Form in Sekunden.
 
 #include <windows.h>
@@ -33,7 +33,7 @@ int wmain()
     const UINT width = 60000;
     const UINT height = 2000;
     const UINT stride = width * 3;
-    const UINT chunk = 50;   // Zeilen je Schreibvorgang -- sonst 360 MB am Stueck
+    const UINT chunk = 50;   // Zeilen je Schreibvorgang -- sonst 360 MB am Stück
 
     ComPtr<IWICStream> stream;
     if (FAILED(factory->CreateStream(&stream))) return 1;
@@ -51,9 +51,9 @@ int wmain()
     WICPixelFormatGUID format = GUID_WICPixelFormat24bppBGR;
     if (FAILED(frame->SetPixelFormat(&format))) return 1;
 
-    // Ein weisser Block in der linken oberen Ecke, sonst senkrechte Streifen
+    // Ein weißer Block in der linken oberen Ecke, sonst senkrechte Streifen
     // mit wechselnder Teilung. Der Block sagt hinterher, wie herum das Bild
-    // haengt; die Streifen sorgen dafuer, dass beim Verkleinern wirklich
+    // hängt; die Streifen sorgen dafür, dass beim Verkleinern wirklich
     // gerechnet werden muss.
     std::vector<BYTE> rows(static_cast<size_t>(stride) * chunk);
     for (UINT y0 = 0; y0 < height; y0 += chunk)
@@ -88,7 +88,7 @@ int wmain()
     if (FAILED(encoder->Commit())) return 1;
     frame.Reset(); encoder.Reset(); stream.Reset();
 
-    // Zurueckgelesen, und zwar genau wie der Hintergrund-Thread es tut.
+    // Zurückgelesen, und zwar genau wie der Hintergrund-Thread es tut.
     ComPtr<IWICBitmapDecoder> decoder;
     if (FAILED(factory->CreateDecoderFromFilename(L"langsam.png", nullptr, GENERIC_READ,
                                                   WICDecodeMetadataCacheOnDemand, &decoder)))

@@ -7,7 +7,7 @@
 
 namespace
 {
-    // Notnagel, falls sich die Decoder nicht aufzaehlen lassen. Deckt die
+    // Notnagel, falls sich die Decoder nicht aufzählen lassen. Deckt die
     // Formate ab, die auf jeder Windows-Installation vorhanden sind.
     const wchar_t* const kFallbackExtensions[] = {
         L".bmp", L".dib", L".gif", L".ico", L".jfif", L".jpe", L".jpeg",
@@ -33,15 +33,15 @@ namespace
     }
 
     // StrCmpLogicalW stellt "Bild2" vor "Bild10"; die rein lexikografische
-    // Reihenfolge waere hier ein sichtbarer Makel. Bei Gleichstand entscheidet
-    // ein gewoehnlicher Vergleich, damit die Ordnung eindeutig bleibt.
+    // Reihenfolge wäre hier ein sichtbarer Makel. Bei Gleichstand entscheidet
+    // ein gewöhnlicher Vergleich, damit die Ordnung eindeutig bleibt.
     bool NaturalLess(const std::wstring& a, const std::wstring& b)
     {
         const int order = StrCmpLogicalW(a.c_str(), b.c_str());
         return order != 0 ? order < 0 : a < b;
     }
 
-    // Dateinamen unterscheidet Windows nicht nach Gross- und Kleinschreibung.
+    // Dateinamen unterscheidet Windows nicht nach Groß- und Kleinschreibung.
     bool SameName(const std::wstring& a, const std::wstring& b)
     {
         return CompareStringOrdinal(a.c_str(), static_cast<int>(a.size()),
@@ -79,8 +79,8 @@ void FolderNavigator::Track(IWICImagingFactory* factory, const std::wstring& pat
     if (!scanned_ || !SameName(folder, folder_))
         Scan(factory, folder);
 
-    // Die geoeffnete Datei gehoert in jedem Fall in die Liste -- auch dann,
-    // wenn kein Decoder ihre Endung beansprucht. Oeffnen liess sie sich ja.
+    // Die geöffnete Datei gehört in jedem Fall in die Liste -- auch dann,
+    // wenn kein Decoder ihre Endung beansprucht. Öffnen ließ sie sich ja.
     auto it = std::find_if(files_.begin(), files_.end(),
                            [&](const std::wstring& entry) { return SameName(entry, name); });
     if (it == files_.end())
@@ -131,7 +131,7 @@ void FolderNavigator::EnsureExtensions(IWICImagingFactory* factory)
     if (!extensions_.empty())
         return;
 
-    // Die Endungen kommen von den tatsaechlich registrierten Decodern, nicht
+    // Die Endungen kommen von den tatsächlich registrierten Decodern, nicht
     // aus einer festen Liste im Code: ist etwa HEIF oder ein Raw-Format
     // nachinstalliert, steht es damit von selbst in der Ordnerliste.
     ComPtr<IEnumUnknown> enumerator;
@@ -155,7 +155,7 @@ void FolderNavigator::EnsureExtensions(IWICImagingFactory* factory)
             if (FAILED(info->GetFileExtensions(length, list.data(), &length)))
                 continue;
 
-            // Die gemeldete Laenge schliesst den Abschluss mit ein.
+            // Die gemeldete Länge schließt den Abschluss mit ein.
             list.resize(length > 0 ? length - 1 : 0);
             AddExtensions(list);
         }
@@ -227,8 +227,8 @@ void FolderNavigator::Drop(const std::wstring& path)
     if (it == files_.end())
         return;
 
-    // Faellt ein Eintrag vor der aktuellen Stelle weg, rueckt diese mit nach
-    // vorn -- sonst zeigte der Index nach dem Loeschen auf den Nachbarn.
+    // Fällt ein Eintrag vor der aktuellen Stelle weg, rückt diese mit nach
+    // vorn -- sonst zeigte der Index nach dem Löschen auf den Nachbarn.
     const size_t position = static_cast<size_t>(it - files_.begin());
     files_.erase(it);
     if (position < index_ && index_ > 0)

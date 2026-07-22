@@ -32,18 +32,18 @@ struct ToolbarButton
     bool mirrored;        // Icon horizontal gespiegelt zeichnen
     bool visible;
     bool enabled;
-    D2D1_RECT_F rect;     // von Layout() gefuellt, in Pixeln
+    D2D1_RECT_F rect;     // von Layout() gefüllt, in Pixeln
 };
 
 // Flache Leiste am unteren Rand. Die Icons sind Pfadgeometrien statt Bitmaps,
-// damit sie auf jeder DPI-Stufe scharf bleiben, ohne mehrere Groessen zu pflegen.
+// damit sie auf jeder DPI-Stufe scharf bleiben, ohne mehrere Größen zu pflegen.
 class Toolbar
 {
 public:
     Toolbar();
 
     HRESULT CreateResources(ID2D1Factory* factory);
-    void DiscardDeviceResources();   // nur die vom Render-Target abhaengigen
+    void DiscardDeviceResources();   // nur die vom Render-Target abhängigen
 
     void SetDpiScale(float scale);
     float Height() const;
@@ -55,14 +55,14 @@ public:
     // Bestimmt, ob der Wiedergabeknopf die Pausen- oder die Abspielmarke zeigt.
     void SetPlaying(bool playing) { playing_ = playing; }
 
-    // Desgleichen fuer das Vollbild: die Pfeile zeigen nach aussen oder innen.
+    // Desgleichen für das Vollbild: die Pfeile zeigen nach außen oder innen.
     void SetFullscreen(bool fullscreen) { fullscreen_ = fullscreen; }
 
     void Layout(float clientWidth, float clientHeight);
     void Draw(ID2D1RenderTarget* target);
 
     ToolbarCommand HitTest(float x, float y) const;
-    bool SetHover(ToolbarCommand command);      // true, wenn sich die Anzeige aendert
+    bool SetHover(ToolbarCommand command);      // true, wenn sich die Anzeige ändert
     bool SetPressed(ToolbarCommand command);
     ToolbarCommand Pressed() const { return pressed_; }
 
@@ -91,7 +91,7 @@ private:
     ComPtr<ID2D1PathGeometry> triangle_;   // zeigt nach rechts
     ComPtr<ID2D1PathGeometry> chevron_;    // desgleichen, aber nur als Strich
     ComPtr<ID2D1PathGeometry> arcBody_;    // Rotationsbogen im Uhrzeigersinn
-    ComPtr<ID2D1PathGeometry> arcHead_;    // zugehoerige Pfeilspitze
+    ComPtr<ID2D1PathGeometry> arcHead_;    // zugehörige Pfeilspitze
     ComPtr<ID2D1PathGeometry> printer_;    // Kasten mit Blatt hinein und heraus
     ComPtr<ID2D1SolidColorBrush> brush_;
 };

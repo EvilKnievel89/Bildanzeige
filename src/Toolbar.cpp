@@ -8,7 +8,7 @@ namespace
     // Entwurfsraster der Icons; alle Koordinaten unten beziehen sich darauf.
     constexpr float kIconBox = 24.0f;
 
-    // Masse in DIP (das Render-Target laeuft auf 96 dpi, also 1 DIP == 1 px
+    // Maße in DIP (das Render-Target läuft auf 96 dpi, also 1 DIP == 1 px
     // bei 100 %). Die DPI-Skalierung wird explizit aufmultipliziert.
     constexpr float kBarHeight = 40.0f;
     constexpr float kButtonSize = 34.0f;
@@ -28,28 +28,28 @@ namespace
     constexpr float kPi = 3.14159265358979f;
 
     // Lupe: Kreis mit Griff nach unten rechts, darin ein Balken (und beim
-    // Vergroessern ein zweiter quer dazu).
+    // Vergrößern ein zweiter quer dazu).
     constexpr float kLensCx = 10.5f;
     constexpr float kLensCy = 10.5f;
     constexpr float kLensR = 6.0f;
-    constexpr float kLensBar = 3.2f;    // halbe Balkenlaenge
+    constexpr float kLensBar = 3.2f;    // halbe Balkenlänge
 
-    // Vier Eckwinkel, nach aussen zeigend -- die gelaeufige Marke fuers
-    // Einpassen. Die Striche ragen um eine halbe Strichbreite ueber die Ecke
+    // Vier Eckwinkel, nach außen zeigend -- die geläufige Marke fürs
+    // Einpassen. Die Striche ragen um eine halbe Strichbreite über die Ecke
     // hinaus, sonst bliebe dort mit stumpfen Enden eine Kerbe stehen.
     constexpr float kMarkInset = 4.0f;
     constexpr float kMarkArm = 5.0f;
     constexpr float kMarkOver = kStrokeWidth * 0.5f;
 
-    // Bildwechsel: ein blosser Winkel, gestrichelt statt gefuellt. Die Leiste
-    // hat damit drei unterscheidbare Pfeilformen -- Winkel fuer die Datei,
-    // Dreieck mit Balken fuer die Seite, blosses Dreieck fuer die Wiedergabe.
-    // Ein viertes gefuelltes Dreieck waere derselbe Fehler wie in M5.
+    // Bildwechsel: ein bloßer Winkel, gestrichelt statt gefüllt. Die Leiste
+    // hat damit drei unterscheidbare Pfeilformen -- Winkel für die Datei,
+    // Dreieck mit Balken für die Seite, bloßes Dreieck für die Wiedergabe.
+    // Ein viertes gefülltes Dreieck wäre derselbe Fehler wie in M5.
     constexpr float kChevronStroke = 2.4f;
 
-    // Schrittmarke: Dreieck mit Balken dahinter. Ohne den Balken saehe der Knopf
+    // Schrittmarke: Dreieck mit Balken dahinter. Ohne den Balken sähe der Knopf
     // im Halt genauso aus wie der Wiedergabeknopf unmittelbar daneben, und man
-    // wuesste nicht, welcher von beiden was tut. Das Dreieck rueckt dafuer um
+    // wüsste nicht, welcher von beiden was tut. Das Dreieck rückt dafür um
     // eine halbe Balkenbreite nach links, damit das Ganze mittig bleibt.
     constexpr float kStepShift = 2.5f;
     constexpr float kStepBarLeft = 16.0f;
@@ -57,8 +57,8 @@ namespace
     constexpr float kStepBarTop = 4.5f;
     constexpr float kStepBarBottom = 19.5f;
 
-    // Pausenmarke: zwei Balken, auf dieselbe Hoehe gesetzt wie das Dreieck der
-    // Schrittknoepfe, damit die drei Knoepfe nebeneinander gleich schwer wirken.
+    // Pausenmarke: zwei Balken, auf dieselbe Höhe gesetzt wie das Dreieck der
+    // Schrittknöpfe, damit die drei Knöpfe nebeneinander gleich schwer wirken.
     constexpr float kPauseTop = 5.0f;
     constexpr float kPauseBottom = 19.0f;
     constexpr float kPauseBar = 2.8f;
@@ -66,31 +66,31 @@ namespace
 
     // Vollbild: zwei Pfeile auf der Hauptdiagonalen. Sie bestehen wie die
     // Einpass-Marke aus Eckwinkeln -- unterschieden werden beide dadurch, dass
-    // hier die Diagonale durch die Mitte laeuft, waehrend die Einpass-Marke
+    // hier die Diagonale durch die Mitte läuft, während die Einpass-Marke
     // vier Ecken um eine leere Mitte setzt.
     //
-    // Hinaus und zurueck brauchen verschiedene Abstaende. Beim Zurueckweg
-    // sitzen die Spitzen innen, und mit denselben Massen wie fuer hinaus
-    // stuenden sie einen halben Punkt auseinander -- aus zwei Pfeilen wuerde
-    // ein Klecks. Sie ruecken deshalb auseinander, der Schaft nach aussen.
+    // Hinaus und zurück brauchen verschiedene Abstände. Beim Zurückweg
+    // sitzen die Spitzen innen, und mit denselben Maßen wie für hinaus
+    // stünden sie einen halben Punkt auseinander -- aus zwei Pfeilen würde
+    // ein Klecks. Sie rücken deshalb auseinander, der Schaft nach außen.
     constexpr float kArrowArm = 4.5f;
-    constexpr float kOutVertex = 5.5f;   // Spitze aussen, Abstand von der Mitte
+    constexpr float kOutVertex = 5.5f;   // Spitze außen, Abstand von der Mitte
     constexpr float kOutTail = 0.5f;     // Schaftende dicht an der Mitte
     constexpr float kBackVertex = 2.5f;  // Spitze innen, aber mit Luft dazwischen
-    constexpr float kBackTail = 7.5f;    // Schaftende aussen
+    constexpr float kBackTail = 7.5f;    // Schaftende außen
 
     // Drucker: ein Blatt oben hinein, ein flacher Kasten, ein Blatt unten
     // heraus. Der erste Entwurf hatte statt des unteren Blattes einen
     // Ausgabeschlitz quer im Kasten -- am Bildschirm nachgesehen las sich das
-    // wie ein Vorhaengeschloss: Buegel oben, Kasten, Balken darin. Der Kasten
+    // wie ein Vorhängeschloss: Bügel oben, Kasten, Balken darin. Der Kasten
     // ist deshalb flacher geworden, das Blatt breiter, und der Schlitz zum
     // heraustretenden Blatt.
     //
     // Der Kasten wird nicht als Rechteck gezogen, sondern zusammen mit dem
     // unteren Blatt als ein einziger geschlossener Umriss: seine Unterkante
-    // bleibt dort offen, wo das Blatt hindurchtritt. Andernfalls laege das
-    // Blatt vor einer durchgehenden Linie und saehe angeklebt aus statt
-    // herauskommend -- und an den Stossstellen zweier Figuren blieben Kerben.
+    // bleibt dort offen, wo das Blatt hindurchtritt. Andernfalls läge das
+    // Blatt vor einer durchgehenden Linie und sähe angeklebt aus statt
+    // herauskommend -- und an den Stoßstellen zweier Figuren blieben Kerben.
     constexpr float kPaperLeft = 6.5f;
     constexpr float kPaperRight = 17.5f;
     constexpr float kPaperTop = 3.5f;
@@ -100,7 +100,7 @@ namespace
     constexpr float kBodyTop = 9.5f;
     constexpr float kBodyBottom = 16.5f;
 
-    // Bogen von 315 Grad nach 225 Grad im Uhrzeigersinn -- die Luecke liegt
+    // Bogen von 315 Grad nach 225 Grad im Uhrzeigersinn -- die Lücke liegt
     // damit oben, die Pfeilspitze sitzt oben links und zeigt nach oben rechts.
     constexpr float kArcCx = 12.0f;
     constexpr float kArcCy = 12.0f;
@@ -193,7 +193,7 @@ namespace
 
     HRESULT CreateArcHead(ID2D1Factory* factory, ID2D1PathGeometry** out)
     {
-        // Die Spitze folgt der Tangente am Bogenende, damit sie zwangslaeufig
+        // Die Spitze folgt der Tangente am Bogenende, damit sie zwangsläufig
         // in Bewegungsrichtung zeigt, statt von Hand gesetzt zu werden.
         const float rad = kArcEndDeg * kPi / 180.0f;
         const D2D1_POINT_2F end = OnCircle(kArcEndDeg);
@@ -238,7 +238,7 @@ namespace
         if (FAILED(hr))
             return hr;
 
-        // Kasten und heraustretendes Blatt in einem Zug: links hoch, ueber die
+        // Kasten und heraustretendes Blatt in einem Zug: links hoch, über die
         // Oberkante, rechts herunter, und die Unterkante nur bis zum Blatt,
         // dann um dieses herum. Alle Ecken bekommen dadurch eine Gehrung.
         sink->BeginFigure(D2D1::Point2F(kBodyLeft, kBodyBottom), D2D1_FIGURE_BEGIN_HOLLOW);
@@ -252,7 +252,7 @@ namespace
         sink->EndFigure(D2D1_FIGURE_END_CLOSED);
 
         // Das Blatt, das hineingeht: drei Seiten, unten offen -- dort steckt es
-        // im Geraet, und die Oberkante des Kastens schliesst die Form ohnehin.
+        // im Gerät, und die Oberkante des Kastens schließt die Form ohnehin.
         sink->BeginFigure(D2D1::Point2F(kPaperLeft, kBodyTop), D2D1_FIGURE_BEGIN_HOLLOW);
         sink->AddLine(D2D1::Point2F(kPaperLeft, kPaperTop));
         sink->AddLine(D2D1::Point2F(kPaperRight, kPaperTop));
@@ -272,17 +272,17 @@ Toolbar::Toolbar()
 {
     buttons_ = {
         // Der Bildwechsel bleibt sichtbar, auch wenn der Ordner nur ein Bild
-        // enthaelt: er ist der Hauptweg durch die Sammlung, und ein Betrachter,
+        // enthält: er ist der Hauptweg durch die Sammlung, und ein Betrachter,
         // der ihn erst zeigt, wenn es etwas zu zeigen gibt, sieht aus, als
-        // koennte er es nicht.
+        // könnte er es nicht.
         { ToolbarCommand::PreviousFile, L"Vorheriges Bild (Pfeil links)",
                                                                         false, true,  true,  false, {} },
         { ToolbarCommand::NextFile,     L"Nächstes Bild (Pfeil rechts)",
                                                                         false, false, true,  false, {} },
 
-        // "Zurück"/"Weiter" statt "Seite": dieselben Knoepfe blaettern bei einem
+        // "Zurück"/"Weiter" statt "Seite": dieselben Knöpfe blättern bei einem
         // TIFF durch Seiten und treten bei einem angehaltenen GIF durch
-        // Einzelbilder. Ein fester Wortlaut passt in beiden Faellen.
+        // Einzelbilder. Ein fester Wortlaut passt in beiden Fällen.
         { ToolbarCommand::PreviousPage, L"Zurück (Bild auf)",           true,  true,  false, false, {} },
         { ToolbarCommand::PlayPause,    L"Anhalten / Fortsetzen (Leertaste)",
                                                                         false, false, false, false, {} },
@@ -294,15 +294,15 @@ Toolbar::Toolbar()
         { ToolbarCommand::RotateLeft,   L"Nach links drehen (Strg+L)",  true,  true,  true,  false, {} },
         { ToolbarCommand::RotateRight,  L"Nach rechts drehen (Strg+R)", false, false, true,  false, {} },
 
-        // Drucken steht fuer sich. Es ist die einzige Funktion der Leiste, die
-        // den Bildschirm verlaesst und etwas anstoesst, das sich nicht mit dem
-        // naechsten Klick zuruecknehmen laesst -- ein Nachbar der Drehknoepfe
-        // waere er zu leicht im Vorbeigehen getroffen.
+        // Drucken steht für sich. Es ist die einzige Funktion der Leiste, die
+        // den Bildschirm verlässt und etwas anstößt, das sich nicht mit dem
+        // nächsten Klick zurücknehmen lässt -- ein Nachbar der Drehknöpfe
+        // wäre er zu leicht im Vorbeigehen getroffen.
         { ToolbarCommand::Print,        L"Drucken (Strg+P)",            true,  false, true,  false, {} },
 
-        // "ein/aus" statt "Vollbild": der Knopf fuehrt in beide Richtungen, die
-        // Kurzhilfe steht aber fest -- sie jedes Mal umzumelden waere Aufwand
-        // fuer einen Wortlaut, den ohnehin nur einer von beiden Zustaenden liest.
+        // "ein/aus" statt "Vollbild": der Knopf führt in beide Richtungen, die
+        // Kurzhilfe steht aber fest -- sie jedes Mal umzumelden wäre Aufwand
+        // für einen Wortlaut, den ohnehin nur einer von beiden Zuständen liest.
         { ToolbarCommand::Fullscreen,   L"Vollbild ein/aus (F11)",      true,  false, true,  false, {} },
     };
 }
@@ -500,7 +500,7 @@ void Toolbar::DrawIcon(ID2D1RenderTarget* target, const ToolbarButton& button, I
         if (triangle_)
         {
             // Die Verschiebung wirkt im Entwurfsraster, also noch vor der
-            // Spiegelung -- beim Zurueck-Knopf wandert der Balken dadurch von
+            // Spiegelung -- beim Zurück-Knopf wandert der Balken dadurch von
             // selbst auf die andere Seite.
             target->SetTransform(D2D1::Matrix3x2F::Translation(-kStepShift, 0.0f) * transform);
             target->FillGeometry(triangle_.Get(), brush);
@@ -613,7 +613,7 @@ void Toolbar::DrawOneToOne(ID2D1RenderTarget* target, ID2D1Brush* brush)
 
 void Toolbar::DrawPlayPause(ID2D1RenderTarget* target, ID2D1Brush* brush)
 {
-    // Der Knopf zeigt, was ein Klick bewirkt: waehrend der Wiedergabe die
+    // Der Knopf zeigt, was ein Klick bewirkt: während der Wiedergabe die
     // Pausenmarke, im Halt das Dreieck.
     if (!playing_)
     {
@@ -633,7 +633,7 @@ void Toolbar::DrawPlayPause(ID2D1RenderTarget* target, ID2D1Brush* brush)
 void Toolbar::DrawFullscreen(ID2D1RenderTarget* target, ID2D1Brush* brush)
 {
     // Zwei Pfeile, die auseinanderstreben -- im Vollbild umgekehrt, dann zeigen
-    // sie zurueck zur Mitte. Der Knopf sagt damit wie der Wiedergabeknopf, was
+    // sie zurück zur Mitte. Der Knopf sagt damit wie der Wiedergabeknopf, was
     // ein Klick bewirkt, nicht was gerade gilt.
     const float center = kIconBox * 0.5f;
     const float vertexDistance = fullscreen_ ? kBackVertex : kOutVertex;
@@ -649,7 +649,7 @@ void Toolbar::DrawFullscreen(ID2D1RenderTarget* target, ID2D1Brush* brush)
 
         // Die Arme der Spitze weisen zum Schaft hin -- damit zeigt der Winkel
         // von selbst dorthin, wo es hingeht, ohne dass die Richtung noch
-        // einmal gesondert bestimmt werden muesste.
+        // einmal gesondert bestimmt werden müsste.
         const float arm = (tail > vertex ? 1.0f : -1.0f) * kArrowArm;
 
         target->DrawLine(D2D1::Point2F(vertex, vertex), D2D1::Point2F(tail, tail), brush,

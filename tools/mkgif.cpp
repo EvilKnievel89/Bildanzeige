@@ -1,10 +1,10 @@
-// Erzeugt Test-GIFs, bei denen ein Fehler in der Komposition sofort auffaellt,
-// und liest sie zur Kontrolle zurueck. Schreibt in das laufende Verzeichnis:
+// Erzeugt Test-GIFs, bei denen ein Fehler in der Komposition sofort auffällt,
+// und liest sie zur Kontrolle zurück. Schreibt in das laufende Verzeichnis:
 //
-//   anim.gif      3 Teilrechtecke, Verzoegerungen 50/25/100
-//   spur.gif      nach Einzelbild N muessen genau N Quadrate stehen
-//   disposal.gif  Aufraeumregeln 1, 2 und 3 nacheinander
-//   zweimal.gif   Wiederholungszaehler 2 -- muss danach stehenbleiben
+//   anim.gif      3 Teilrechtecke, Verzögerungen 50/25/100
+//   spur.gif      nach Einzelbild N müssen genau N Quadrate stehen
+//   disposal.gif  Aufräumregeln 1, 2 und 3 nacheinander
+//   zweimal.gif   Wiederholungszähler 2 -- muss danach stehenbleiben
 #include <windows.h>
 #include <wincodec.h>
 #include <wrl/client.h>
@@ -122,8 +122,8 @@ static void Report(IWICImagingFactory* fac, const wchar_t* path) {
         UINT fw = 0, fh = 0; fr->GetSize(&fw, &fh);
         ComPtr<IWICMetadataQueryReader> fq; fr->GetMetadataQueryReader(&fq);
 
-        // Wie viele Pixel kommen wirklich durchsichtig zurueck? Genau darauf
-        // stuetzt sich die Ueberlagerung im GifAnimator.
+        // Wie viele Pixel kommen wirklich durchsichtig zurück? Genau darauf
+        // stützt sich die Überlagerung im GifAnimator.
         ULONG clear = 0, total = 0;
         ComPtr<IWICFormatConverter> conv;
         if (SUCCEEDED(fac->CreateFormatConverter(&conv)) &&
@@ -150,14 +150,14 @@ int wmain() {
     if (FAILED(CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER,
                                 IID_PPV_ARGS(&f)))) return 1;
 
-    // 0 durchsichtig, 1 blau, 2 rot, 3 gruen, 4 weiss, 5 orange
+    // 0 durchsichtig, 1 blau, 2 rot, 3 grün, 4 weiß, 5 orange
     std::vector<WICColor> pal = { 0xFF000000, 0xFF1B3A6B, 0xFFD03030, 0xFF30A050,
                                   0xFFF0F0F0, 0xFFE08020 };
 
     // -- anim.gif: der einfachste Fall. Ein volles Einzelbild, dann zwei
-    //    Teilrechtecke an verschiedenen Stellen, mit ungleichen Verzoegerungen
-    //    (500, 250, 1000 ms). Werden die Zeiten nicht beachtet, laeuft es
-    //    sichtbar gleichmaessig.
+    //    Teilrechtecke an verschiedenen Stellen, mit ungleichen Verzögerungen
+    //    (500, 250, 1000 ms). Werden die Zeiten nicht beachtet, läuft es
+    //    sichtbar gleichmäßig.
     {
         std::vector<Frame> fr;
         Frame a0 = Make(64, 64, 0, 0, 50, 2, 1);
@@ -170,9 +170,9 @@ int wmain() {
         Write(f.Get(), L"anim.gif", pal, fr, 0, false);
     }
 
-    // -- spur.gif: alle Frames "stehenlassen" (Disposal 1). Nach Frame N muessen
+    // -- spur.gif: alle Frames "stehenlassen" (Disposal 1). Nach Frame N müssen
     //    genau N+1 Quadrate zu sehen sein; ein durchsichtiger Rand um jedes
-    //    Quadrat darf den Hintergrund nicht ueberschreiben.
+    //    Quadrat darf den Hintergrund nicht überschreiben.
     {
         std::vector<Frame> fr;
         Frame f0 = Make(240, 160, 0, 0, 10, 1, 1);
@@ -187,17 +187,17 @@ int wmain() {
         Write(f.Get(), L"spur.gif", pal, fr, 0, true);
     }
 
-    // -- disposal.gif: die drei Aufraeumregeln nacheinander.
+    // -- disposal.gif: die drei Aufräumregeln nacheinander.
     {
         std::vector<Frame> fr;
         fr.push_back(Make(240, 160, 0, 0, 40, 1, 1));            // ganz blau, stehenlassen
         Frame f1 = Make(40, 40, 20, 60, 40, 2, 2); fr.push_back(f1);   // rot, auf Hintergrund
-        Frame f2 = Make(40, 40, 100, 60, 40, 3, 3); fr.push_back(f2);  // gruen, auf vorigen Stand
-        Frame f3 = Make(40, 40, 180, 60, 40, 1, 4); fr.push_back(f3);  // weiss, stehenlassen
+        Frame f2 = Make(40, 40, 100, 60, 40, 3, 3); fr.push_back(f2);  // grün, auf vorigen Stand
+        Frame f3 = Make(40, 40, 180, 60, 40, 1, 4); fr.push_back(f3);  // weiß, stehenlassen
         Write(f.Get(), L"disposal.gif", pal, fr, 0, true);
     }
 
-    // -- zweimal.gif: endlicher Wiederholungszaehler.
+    // -- zweimal.gif: endlicher Wiederholungszähler.
     {
         std::vector<Frame> fr;
         for (int i = 0; i < 3; i++)
@@ -207,7 +207,7 @@ int wmain() {
 
     // -- gross_a/gross_b: dieselbe Bauart beidseits der 256-MB-Grenze.
     //    3400*1000*4 = 13,6 MB je Leinwand. 19 Frames = 258 MB (darunter, wird
-    //    zwischengespeichert), 20 Frames = 272 MB (darueber, wird fortlaufend
+    //    zwischengespeichert), 20 Frames = 272 MB (darüber, wird fortlaufend
     //    komponiert). Der Unterschied muss sich am Speicherbedarf ablesen lassen.
     for (int variant = 0; variant < 2; variant++) {
         const int count = 19 + variant;

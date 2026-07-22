@@ -2,7 +2,7 @@
 //
 //     pixelformate.exe ..\..\testdata\fax.tif ..\..\testdata\mehrseitig.tif
 //
-// Nennt je Seite Groesse und Pixelformat und versucht dann genau den Schritt,
+// Nennt je Seite Größe und Pixelformat und versucht dann genau den Schritt,
 // den auch die Anwendung geht: die Wandlung nach 32bppPBGRA. Daraus stammt der
 // Befund, dass ein Fax-TIFF mit 1 bpp hereinkommt und ohne diese Wandlung
 // unsichtbar bliebe -- PLAN.md, Abschnitt 3.
@@ -33,7 +33,7 @@ int wmain(int argc, wchar_t** argv) {
         ComPtr<IWICBitmapDecoder> dec;
         HRESULT hr = f->CreateDecoderFromFilename(argv[a], nullptr, GENERIC_READ,
                                                   WICDecodeMetadataCacheOnDemand, &dec);
-        if (FAILED(hr)) { wprintf(L"  oeffnen fehlgeschlagen 0x%08lX\n", (unsigned long)hr); continue; }
+        if (FAILED(hr)) { wprintf(L"  öffnen fehlgeschlagen 0x%08lX\n", (unsigned long)hr); continue; }
 
         UINT n = 0; dec->GetFrameCount(&n);
         wprintf(L"  Frames: %u\n", n);

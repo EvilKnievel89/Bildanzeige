@@ -6,7 +6,7 @@
 
 namespace
 {
-    // Hintergrund der Bildflaeche.
+    // Hintergrund der Bildfläche.
     constexpr UINT32 kBackground = 0x1E1E1E;
 }
 
@@ -41,14 +41,14 @@ HRESULT RenderView::CreateDeviceResources()
         static_cast<UINT32>(std::max<LONG>(rc.right - rc.left, 1)),
         static_cast<UINT32>(std::max<LONG>(rc.bottom - rc.top, 1)));
 
-    // DPI fest auf 96 -> ein DIP entspricht genau einem Pixel. Fuer einen
+    // DPI fest auf 96 -> ein DIP entspricht genau einem Pixel. Für einen
     // Bildbetrachter ist das die ehrlichste Basis; die DPI-Skalierung der
-    // Bedienelemente wird spaeter explizit gerechnet.
+    // Bedienelemente wird später explizit gerechnet.
     D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties();
     props.dpiX = 96.0f;
     props.dpiY = 96.0f;
 
-    // Die Bitmap kehrt hier nicht von selbst zurueck: sie wird vom Aufrufer
+    // Die Bitmap kehrt hier nicht von selbst zurück: sie wird vom Aufrufer
     // neu angefordert, sobald er HasImage() als falsch vorfindet.
     return factory_->CreateHwndRenderTarget(
         props, D2D1::HwndRenderTargetProperties(hwnd_, size), &target_);
@@ -71,8 +71,8 @@ HRESULT RenderView::SetImage(IWICBitmapSource* source, UINT nominalWidth, UINT n
     nominalHeight_ = nominalHeight;
     const HRESULT hr = Upload(source);
 
-    // Jede neue Seite beginnt eingepasst. Den Zoom der Vorgaengerseite
-    // beizubehalten waere bei unterschiedlich grossen Seiten ein Blindflug.
+    // Jede neue Seite beginnt eingepasst. Den Zoom der Vorgängerseite
+    // beizubehalten wäre bei unterschiedlich großen Seiten ein Blindflug.
     state_.Reset();
     return hr;
 }
@@ -81,13 +81,13 @@ HRESULT RenderView::UpdateImage(IWICBitmapSource* source)
 {
     const D2D1_SIZE_F before = state_.ImageSize();
 
-    nominalWidth_ = 0;   // Eine GIF-Leinwand liegt stets vollstaendig vor.
+    nominalWidth_ = 0;   // Eine GIF-Leinwand liegt stets vollständig vor.
     nominalHeight_ = 0;
     const HRESULT hr = Upload(source);
 
     // Bei einer Animation wechselt nur der Inhalt der Leinwand; wer in ein
-    // Detail hineingezoomt hat, soll es im naechsten Einzelbild wiederfinden.
-    // Aendert sich dagegen die Groesse, waeren Massstab und Ausschnitt auf
+    // Detail hineingezoomt hat, soll es im nächsten Einzelbild wiederfinden.
+    // Ändert sich dagegen die Größe, wären Maßstab und Ausschnitt auf
     // etwas anderes bezogen -- dann wird eingepasst.
     const D2D1_SIZE_F after = state_.ImageSize();
     if (after.width != before.width || after.height != before.height)
@@ -118,8 +118,8 @@ HRESULT RenderView::Upload(IWICBitmapSource* source)
 
     ComPtr<IWICBitmapSource> upload = source;
 
-    // Der Hintergrund-Thread hat die Texturgrenze bereits beruecksichtigt --
-    // er kennt sie ueber MaxBitmapSize(). Diese Rechnung bleibt trotzdem
+    // Der Hintergrund-Thread hat die Texturgrenze bereits berücksichtigt --
+    // er kennt sie über MaxBitmapSize(). Diese Rechnung bleibt trotzdem
     // stehen: die Grenze wird vor dem Auftrag abgefragt, und bis das Ergebnis
     // eintrifft, kann das Fenster auf einer anderen Grafikkarte gelandet sein.
     const UINT maxDimension = target_->GetMaximumBitmapSize();
@@ -150,11 +150,11 @@ HRESULT RenderView::Upload(IWICBitmapSource* source)
     if (FAILED(hr))
         return hr;
 
-    // Die Ansicht rechnet in den Massen der Datei, nicht in denen der Textur.
-    // Musste fuer die Texturgrenze verkleinert werden, wird das Bitmap beim
-    // Zeichnen wieder auseinandergezogen; "Originalgroesse" bedeutet dann
-    // weiterhin die Groesse, die in der Datei steht -- nur eben aus weniger
-    // Pixeln aufgebaut, denn mehr nimmt das Geraet nicht an.
+    // Die Ansicht rechnet in den Maßen der Datei, nicht in denen der Textur.
+    // Musste für die Texturgrenze verkleinert werden, wird das Bitmap beim
+    // Zeichnen wieder auseinandergezogen; "Originalgröße" bedeutet dann
+    // weiterhin die Größe, die in der Datei steht -- nur eben aus weniger
+    // Pixeln aufgebaut, denn mehr nimmt das Gerät nicht an.
     const D2D1_SIZE_F texture = bitmap_->GetSize();
     state_.SetImageSize(nominalWidth_ > 0 && nominalHeight_ > 0
                             ? D2D1::SizeF(static_cast<float>(nominalWidth_),
@@ -198,9 +198,9 @@ HRESULT RenderView::Render(Toolbar* toolbar)
         const D2D1_SIZE_F client = target_->GetSize();
         UpdateViewport(client.width, client.height);
 
-        // Bei 90 und 270 Grad tauschen Breite und Hoehe die Rollen: die Ansicht
-        // rechnet mit der gedrehten Groesse, gezeichnet wird das ungedrehte
-        // Bitmap in ein entsprechend zurueckgetauschtes Rechteck.
+        // Bei 90 und 270 Grad tauschen Breite und Höhe die Rollen: die Ansicht
+        // rechnet mit der gedrehten Größe, gezeichnet wird das ungedrehte
+        // Bitmap in ein entsprechend zurückgetauschtes Rechteck.
         const D2D1_RECT_F dest = state_.DestRect();
         const int rotation = state_.Rotation();
         const bool swapped = (rotation % 2) != 0;
@@ -215,15 +215,15 @@ HRESULT RenderView::Render(Toolbar* toolbar)
         const D2D1_RECT_F drawRect = D2D1::RectF(cx - drawWidth * 0.5f, cy - drawHeight * 0.5f,
                                                  cx + drawWidth * 0.5f, cy + drawHeight * 0.5f);
 
-        // Beim Verkleinern wird geglaettet, sonst rauschen feine Raster.
-        // Oberhalb der Originalgroesse dagegen bleiben die Pixel hart: bei
+        // Beim Verkleinern wird geglättet, sonst rauschen feine Raster.
+        // Oberhalb der Originalgröße dagegen bleiben die Pixel hart: bei
         // einem Scan will man sehen, was dasteht, nicht ein weichgezeichnetes
         // Mittel daraus.
         //
-        // Gemessen wird an der Textur, nicht am Massstab der Ansicht: musste
-        // das Bild fuer die Texturgrenze verkleinert werden, gibt es dort keine
-        // echten Pixel mehr zu zeigen, und harte Kanten wuerden nur die Stufen
-        // des Herunterrechnens vergroessern.
+        // Gemessen wird an der Textur, nicht am Maßstab der Ansicht: musste
+        // das Bild für die Texturgrenze verkleinert werden, gibt es dort keine
+        // echten Pixel mehr zu zeigen, und harte Kanten würden nur die Stufen
+        // des Herunterrechnens vergrößern.
         const D2D1_SIZE_F texture = bitmap_->GetSize();
         const bool full = texture.width >= state_.ImageSize().width;
         const D2D1_BITMAP_INTERPOLATION_MODE mode =

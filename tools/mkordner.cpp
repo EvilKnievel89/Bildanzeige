@@ -1,15 +1,15 @@
-// Testdaten fuer Ordnerliste und EXIF-Orientierung. Schreibt in das laufende
-// Verzeichnis und liest alles zur Kontrolle zurueck:
+// Testdaten für Ordnerliste und EXIF-Orientierung. Schreibt in das laufende
+// Verzeichnis und liest alles zur Kontrolle zurück:
 //
-//   ordner\Bild1.png, Bild2.png, Bild10.png   -- 1, 2 bzw. 10 weisse Quadrate
+//   ordner\Bild1.png, Bild2.png, Bild10.png   -- 1, 2 bzw. 10 weiße Quadrate
 //   dreh<N>.jpg                               -- EXIF-Orientierung N (1..8)
 //
 // Von den acht Drehungen liegen nur dreh1 und dreh6 in testdata: die eine als
-// Vergleichsstueck, die andere als der Fall, der hochkant erscheinen muss.
-// Die uebrigen sechs entstehen mit und sind zum Nachsehen da.
+// Vergleichsstück, die andere als der Fall, der hochkant erscheinen muss.
+// Die übrigen sechs entstehen mit und sind zum Nachsehen da.
 //
-// Die Quadratzahl macht im laufenden Programm zaehlbar, welche Datei gerade
-// zu sehen ist; die Namen zeigen, ob natuerlich sortiert wird (1, 2, 10) oder
+// Die Quadratzahl macht im laufenden Programm zählbar, welche Datei gerade
+// zu sehen ist; die Namen zeigen, ob natürlich sortiert wird (1, 2, 10) oder
 // lexikografisch (1, 10, 2).
 
 #include <windows.h>
@@ -26,7 +26,7 @@ namespace
 {
     ComPtr<IWICImagingFactory> g_factory;
 
-    // 32bppBGRA-Puffer, damit sich bequem hineinschreiben laesst.
+    // 32bppBGRA-Puffer, damit sich bequem hineinschreiben lässt.
     struct Canvas
     {
         UINT width = 0;
@@ -130,7 +130,7 @@ namespace
         return encoder->Commit();
     }
 
-    // Liest genau so zurueck, wie ImageDocument::ReadOrientation es tut.
+    // Liest genau so zurück, wie ImageDocument::ReadOrientation es tut.
     void Report(const wchar_t* path)
     {
         ComPtr<IWICBitmapDecoder> decoder;
@@ -138,7 +138,7 @@ namespace
                                                           WICDecodeMetadataCacheOnDemand, &decoder);
         if (FAILED(hr))
         {
-            wprintf(L"  %-24s OEFFNEN FEHLGESCHLAGEN 0x%08X\n", path, hr);
+            wprintf(L"  %-24s ÖFFNEN FEHLGESCHLAGEN 0x%08X\n", path, hr);
             return;
         }
 
@@ -178,7 +178,7 @@ int wmain()
 
     CreateDirectoryW(L"ordner", nullptr);
 
-    // ---- Ordnerdateien: N Quadrate zu 32x32, fuenf je Reihe --------------
+    // ---- Ordnerdateien: N Quadrate zu 32x32, fünf je Reihe --------------
     struct { const wchar_t* name; UINT squares; } folder[] = {
         { L"ordner\\Bild1.png", 1 }, { L"ordner\\Bild2.png", 2 }, { L"ordner\\Bild10.png", 10 },
     };
@@ -196,7 +196,7 @@ int wmain()
     }
 
     // ---- EXIF-Orientierungen 1..8 ----------------------------------------
-    // 1200x300 quer, weisser Block in der gespeicherten linken oberen Ecke.
+    // 1200x300 quer, weißer Block in der gespeicherten linken oberen Ecke.
     // Nach der Drehung muss er in genau einer Ecke stehen, und bei 90/270 Grad
     // wird aus dem Querformat ein Hochformat.
     for (unsigned orientation = 1; orientation <= 8; ++orientation)
@@ -204,7 +204,7 @@ int wmain()
         Canvas canvas;
         canvas.Create(1200, 300, 0x30);
         canvas.Fill(0, 0, 120, 120, 255, 255, 255);
-        // Ein schmaler Streifen laengs, damit auch ohne Zaehlen zu sehen ist,
+        // Ein schmaler Streifen längs, damit auch ohne Zählen zu sehen ist,
         // wo oben ist.
         canvas.Fill(0, 140, 1200, 12, 0x90, 0x90, 0x90);
 
@@ -215,7 +215,7 @@ int wmain()
         wprintf(L"%-24s Orientierung %u -> 0x%08X\n", path, orientation, hr);
     }
 
-    wprintf(L"\nZurueckgelesen:\n");
+    wprintf(L"\nZurückgelesen:\n");
     for (const auto& entry : folder)
         Report(entry.name);
     for (unsigned orientation = 1; orientation <= 8; ++orientation)

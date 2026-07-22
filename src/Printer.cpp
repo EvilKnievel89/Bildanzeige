@@ -13,15 +13,15 @@
 
 namespace
 {
-    // Zweite Grenze neben maxDpi, fuer grosses Papier: A0 bei 600 dpi waeren
+    // Zweite Grenze neben maxDpi, für großes Papier: A0 bei 600 dpi wären
     // 550 Megapixel. 36 Millionen sind A4 bei 600 dpi mit Luft -- der Fall, um
     // den es geht, passt also darunter.
     constexpr double kMaxRenderPixels = 36'000'000.0;
 
     // Platz des Bildes auf dem Blatt: eingepasst unter Wahrung des
-    // Seitenverhaeltnisses und auf dem *Blatt* zentriert, nicht im bedruckbaren
-    // Bereich. Der ist bei den meisten Geraeten unsymmetrisch -- unten bleibt
-    // fuer den Einzug mehr Rand. Wer darin zentriert, bekommt ein Bild, das auf
+    // Seitenverhältnisses und auf dem *Blatt* zentriert, nicht im bedruckbaren
+    // Bereich. Der ist bei den meisten Geräten unsymmetrisch -- unten bleibt
+    // für den Einzug mehr Rand. Wer darin zentriert, bekommt ein Bild, das auf
     // dem fertigen Blatt sichtbar zu hoch sitzt.
     PrintPlacement FitOnSheet(HDC dc, UINT imageWidth, UINT imageHeight)
     {
@@ -37,8 +37,8 @@ namespace
         place.width = std::clamp(static_cast<int>(std::lround(imageWidth * scale)), 1, areaWidth);
         place.height = std::clamp(static_cast<int>(std::lround(imageHeight * scale)), 1, areaHeight);
 
-        // Der Ursprung des Geraets liegt in der linken oberen Ecke des
-        // *bedruckbaren* Bereichs; das Blatt faengt um PHYSICALOFFSET frueher an.
+        // Der Ursprung des Geräts liegt in der linken oberen Ecke des
+        // *bedruckbaren* Bereichs; das Blatt fängt um PHYSICALOFFSET früher an.
         int sheetWidth = GetDeviceCaps(dc, PHYSICALWIDTH);
         int sheetHeight = GetDeviceCaps(dc, PHYSICALHEIGHT);
         int offsetX = GetDeviceCaps(dc, PHYSICALOFFSETX);
@@ -56,15 +56,15 @@ namespace
         place.x = (sheetWidth - place.width) / 2 - offsetX;
         place.y = (sheetHeight - place.height) / 2 - offsetY;
 
-        // Auf dem Blatt zentriert kann heissen: zum Teil im unbedruckbaren Rand.
+        // Auf dem Blatt zentriert kann heißen: zum Teil im unbedruckbaren Rand.
         place.x = std::clamp(place.x, 0, areaWidth - place.width);
         place.y = std::clamp(place.y, 0, areaHeight - place.height);
         return place;
     }
 
     // Dieselbe Drehung wie in der Anzeige. WICBitmapTransformRotate90 dreht im
-    // Uhrzeigersinn, ebenso wie ViewState zaehlt -- die Viertel gehen also
-    // unveraendert durch.
+    // Uhrzeigersinn, ebenso wie ViewState zählt -- die Viertel gehen also
+    // unverändert durch.
     ComPtr<IWICBitmapSource> Turn(IWICImagingFactory* wic, IWICBitmapSource* source,
                                   int quarters, std::wstring& error)
     {
@@ -84,7 +84,7 @@ namespace
             hr = rotator->Initialize(source, options);
         if (FAILED(hr))
         {
-            error = L"Das Bild liess sich nicht drehen.\n\n" + FormatHResult(hr);
+            error = L"Das Bild ließ sich nicht drehen.\n\n" + FormatHResult(hr);
             return nullptr;
         }
 
@@ -107,7 +107,7 @@ namespace
             hr = scaler->Initialize(source, width, height, WICBitmapInterpolationModeFant);
         if (FAILED(hr))
         {
-            error = L"Das Bild liess sich nicht auf die Seitengroesse bringen.\n\n" +
+            error = L"Das Bild ließ sich nicht auf die Seitengröße bringen.\n\n" +
                     FormatHResult(hr);
             return nullptr;
         }
@@ -164,7 +164,7 @@ bool PrintPageToDC(HDC dc, IWICImagingFactory* wic, IWICBitmapSource* source, in
     UINT height = 0;
     if (FAILED(turned->GetSize(&width, &height)) || width == 0 || height == 0)
     {
-        error = L"Das Bild hat keine brauchbare Groesse.";
+        error = L"Das Bild hat keine brauchbare Größe.";
         return false;
     }
 
@@ -177,10 +177,10 @@ bool PrintPageToDC(HDC dc, IWICImagingFactory* wic, IWICBitmapSource* source, in
         return false;
     }
 
-    // Gerechnet wird hoechstens so fein, wie das Blatt es aufnimmt, und
-    // hoechstens so fein, wie die Quelle es hergibt. Ein kleines Bild wird also
-    // nicht hier vergroessert, sondern von StretchDIBits im Treiber -- das
-    // spart den Speicher fuer eine Vergroesserung, die nichts hinzufuegt.
+    // Gerechnet wird höchstens so fein, wie das Blatt es aufnimmt, und
+    // höchstens so fein, wie die Quelle es hergibt. Ein kleines Bild wird also
+    // nicht hier vergrößert, sondern von StretchDIBits im Treiber -- das
+    // spart den Speicher für eine Vergrößerung, die nichts hinzufügt.
     double allowed = static_cast<double>(place.width);
     const int dpi = GetDeviceCaps(dc, LOGPIXELSX);
     const int ceiling = maxDpi > 0 ? maxDpi : kPrintDpi;
@@ -203,16 +203,16 @@ bool PrintPageToDC(HDC dc, IWICImagingFactory* wic, IWICBitmapSource* source, in
             return false;
     }
 
-    // Ein einziger Puffer fuer beides: erst kommen 32bppPBGRA hinein, dann
+    // Ein einziger Puffer für beides: erst kommen 32bppPBGRA hinein, dann
     // werden sie an Ort und Stelle zu 24bppBGR zusammengeschoben. Ein zweiter
-    // Puffer waere bei 36 Megapixeln noch einmal 100 MB, und zeilenweise zu
-    // holen hiesse bei einem JPEG, die Datei je Streifen erneut zu dekodieren.
+    // Puffer wäre bei 36 Megapixeln noch einmal 100 MB, und zeilenweise zu
+    // holen hieße bei einem JPEG, die Datei je Streifen erneut zu dekodieren.
     const size_t sourceStride = static_cast<size_t>(renderWidth) * 4;
     const size_t sourceBytes = sourceStride * renderHeight;
     std::unique_ptr<BYTE[]> pixelBuffer(new (std::nothrow) BYTE[sourceBytes]);
     if (!pixelBuffer)
     {
-        error = L"Fuer den Druck ist nicht genug Speicher frei.";
+        error = L"Für den Druck ist nicht genug Speicher frei.";
         return false;
     }
 
@@ -220,17 +220,17 @@ bool PrintPageToDC(HDC dc, IWICImagingFactory* wic, IWICBitmapSource* source, in
                                          static_cast<UINT>(sourceBytes), pixelBuffer.get());
     if (FAILED(hr))
     {
-        error = L"Das Bild liess sich nicht lesen.\n\n" + FormatHResult(hr);
+        error = L"Das Bild ließ sich nicht lesen.\n\n" + FormatHResult(hr);
         return false;
     }
 
-    // Papier ist weiss. Ohne das Unterlegen kaeme jede durchsichtige Stelle als
+    // Papier ist weiß. Ohne das Unterlegen käme jede durchsichtige Stelle als
     // Schwarz heraus, denn in vormultiplizierten Werten steht dort eine Null.
-    // Ueber Weiss ist die Rechnung denkbar einfach: Wert + (255 - Alpha).
+    // Über Weiß ist die Rechnung denkbar einfach: Wert + (255 - Alpha).
     //
-    // Die Zielzeile ist nie laenger als die Quellzeile, und im Zeileninneren
-    // laeuft das Ziel um ein Byte je Punkt hinter der Quelle her -- es wird
-    // also nichts ueberschrieben, was noch zu lesen waere.
+    // Die Zielzeile ist nie länger als die Quellzeile, und im Zeileninneren
+    // läuft das Ziel um ein Byte je Punkt hinter der Quelle her -- es wird
+    // also nichts überschrieben, was noch zu lesen wäre.
     const size_t targetStride =
         ((static_cast<size_t>(renderWidth) * 3) + 3) & ~static_cast<size_t>(3);
     for (UINT y = 0; y < renderHeight; ++y)
@@ -257,10 +257,10 @@ bool PrintPageToDC(HDC dc, IWICImagingFactory* wic, IWICBitmapSource* source, in
     header.biCompression = BI_RGB;
     header.biSizeImage = static_cast<DWORD>(targetStride * renderHeight);
 
-    // HALFTONE statt COLORONCOLOR: der Treiber vergroessert hier meist noch ein
-    // wenig -- das Zwischenbild rechnet in Geraetepunkten, aber hoechstens mit
-    // 600 dpi -- und ohne Glaettung braechte das an jeder Kante Treppen aufs
-    // Blatt. SetBrushOrgEx gehoert dazu: HALFTONE verschiebt sonst das Raster.
+    // HALFTONE statt COLORONCOLOR: der Treiber vergrößert hier meist noch ein
+    // wenig -- das Zwischenbild rechnet in Gerätepunkten, aber höchstens mit
+    // 600 dpi -- und ohne Glättung brächte das an jeder Kante Treppen aufs
+    // Blatt. SetBrushOrgEx gehört dazu: HALFTONE verschiebt sonst das Raster.
     SetStretchBltMode(dc, HALFTONE);
     SetBrushOrgEx(dc, 0, 0, nullptr);
 
@@ -286,7 +286,7 @@ RECT PrintMetafileFrame(HDC printerDC)
 
     // 2540 Hundertstelmillimeter sind ein Zoll. Gerechnet wird aus HORZRES und
     // LOGPIXELSX statt aus HORZSIZE: die beiden ersten beziehen sich sicher auf
-    // den bedruckbaren Bereich, waehrend HORZSIZE je nach Treiber auch das
+    // den bedruckbaren Bereich, während HORZSIZE je nach Treiber auch das
     // ganze Blatt meinen kann.
     return RECT{ 0, 0, MulDiv(GetDeviceCaps(printerDC, HORZRES), 2540, dpiX),
                  MulDiv(GetDeviceCaps(printerDC, VERTRES), 2540, dpiY) };
@@ -297,13 +297,13 @@ PrintOutcome PrintImage(HWND owner, IWICImagingFactory* wic, const PrintJob& job
 {
     if (wic == nullptr || job.document == nullptr || !job.document->IsOpen())
     {
-        error = L"Es ist kein Bild geoeffnet.";
+        error = L"Es ist kein Bild geöffnet.";
         return PrintOutcome::Failed;
     }
 
     // Eine Animation ist eine Seite: ihre Einzelbilder sind derselbe Vorgang in
-    // der Zeit, keine Blaetter. Ein GIF von zwanzig Frames auf zwanzig Seiten zu
-    // werfen waere kein Dienst, sondern ein Missverstaendnis.
+    // der Zeit, keine Blätter. Ein GIF von zwanzig Frames auf zwanzig Seiten zu
+    // werfen wäre kein Dienst, sondern ein Missverständnis.
     const bool single = job.composed != nullptr;
     const UINT pageCount = single ? 1u : job.document->FrameCount();
     const UINT currentPage = job.currentPage < pageCount ? job.currentPage : 0;
@@ -316,9 +316,9 @@ PrintOutcome PrintImage(HWND owner, IWICImagingFactory* wic, const PrintJob& job
     dialog.lStructSize = sizeof(dialog);
     dialog.hwndOwner = owner;
     // PD_NOSELECTION: eine "Auswahl" gibt es hier nicht, der Betrachter kennt
-    // keine Markierung. PD_USEDEVMODECOPIESANDCOLLATE ueberlaesst Kopien und
+    // keine Markierung. PD_USEDEVMODECOPIESANDCOLLATE überlässt Kopien und
     // Sortierung dem Treiber, der das ungleich schneller kann als wir --
-    // dieselbe Seite mehrfach zu drucken hiesse sonst, sie mehrfach zu dekodieren.
+    // dieselbe Seite mehrfach zu drucken hieße sonst, sie mehrfach zu dekodieren.
     dialog.Flags = PD_RETURNDC | PD_NOSELECTION | PD_USEDEVMODECOPIESANDCOLLATE;
     dialog.nMinPage = 1;
     dialog.nMaxPage = pageCount;
@@ -330,7 +330,7 @@ PrintOutcome PrintImage(HWND owner, IWICImagingFactory* wic, const PrintJob& job
 
     if (pageCount > 1)
     {
-        // Vorgewaehlt ist die gezeigte Seite, nicht das ganze Dokument. Wer bei
+        // Vorgewählt ist die gezeigte Seite, nicht das ganze Dokument. Wer bei
         // Seite 3 eines Faxes auf Drucken tippt, meint diese Seite; "Alle" ist
         // einen Klick entfernt, ein versehentlich ausgeworfener Stapel dagegen
         // nicht mehr einzusammeln.
@@ -356,7 +356,7 @@ PrintOutcome PrintImage(HWND owner, IWICImagingFactory* wic, const PrintJob& job
     if (FAILED(hr))
     {
         release();
-        error = L"Der Druckdialog liess sich nicht oeffnen.\n\n" + FormatHResult(hr);
+        error = L"Der Druckdialog ließ sich nicht öffnen.\n\n" + FormatHResult(hr);
         return PrintOutcome::Failed;
     }
     if (dialog.dwResultAction != PD_RESULT_PRINT)
@@ -378,14 +378,14 @@ PrintOutcome PrintImage(HWND owner, IWICImagingFactory* wic, const PrintJob& job
         return PrintOutcome::Cancelled;
     }
 
-    // Kopien nimmt gewoehnlich der Treiber ab. Loescht er das Flag, kann er es
+    // Kopien nimmt gewöhnlich der Treiber ab. Löscht er das Flag, kann er es
     // nicht -- dann wird die ganze Folge wiederholt, also sortiert ausgegeben.
     const UINT copies = ((dialog.Flags & PD_USEDEVMODECOPIESANDCOLLATE) == 0 && dialog.nCopies > 1)
                             ? dialog.nCopies
                             : 1u;
 
     // Der Dateiname landet in der Warteschlange. Ein Auftrag, der dort
-    // "Bildanzeige" hiesse, waere bei drei wartenden nicht zu unterscheiden.
+    // "Bildanzeige" hieße, wäre bei drei wartenden nicht zu unterscheiden.
     std::wstring name = job.document->Path();
     if (const wchar_t* file = PathFindFileNameW(name.c_str()))
         name = file;
@@ -395,10 +395,10 @@ PrintOutcome PrintImage(HWND owner, IWICImagingFactory* wic, const PrintJob& job
     info.lpszDocName = name.c_str();
 
     // Gedruckt wird im UI-Thread, und solange steht das Fenster. Der Weg in den
-    // Hintergrund-Thread waere hier teuer erkauft: der Dialog davor ist ohnehin
-    // modal, die Arbeit danach ist durch die Aufloesung des Geraets nach oben
-    // begrenzt, und ein Auftrag, der einen Dateiwechsel ueberdauert, braeuchte
-    // eine zweite Buchfuehrung ueber Zustaende, die sich unterdessen aendern.
+    // Hintergrund-Thread wäre hier teuer erkauft: der Dialog davor ist ohnehin
+    // modal, die Arbeit danach ist durch die Auflösung des Geräts nach oben
+    // begrenzt, und ein Auftrag, der einen Dateiwechsel überdauert, bräuchte
+    // eine zweite Buchführung über Zustände, die sich unterdessen ändern.
     const HCURSOR previous = SetCursor(LoadCursorW(nullptr, IDC_WAIT));
 
     bool ok = StartDocW(dialog.hDC, &info) > 0;
@@ -453,7 +453,7 @@ PrintOutcome PrintImage(HWND owner, IWICImagingFactory* wic, const PrintJob& job
         else
         {
             // Ohne das bliebe ein halber Auftrag in der Warteschlange stehen und
-            // braechte Papier mit halben Seiten heraus.
+            // brächte Papier mit halben Seiten heraus.
             AbortDoc(dialog.hDC);
         }
     }

@@ -1,9 +1,9 @@
-// Steht die Grundlage ueberhaupt bereit?
+// Steht die Grundlage überhaupt bereit?
 //
 // Die erste Frage des ganzen Vorhabens: gibt es auf diesem Rechner Direct2D
 // und WIC, ohne dass irgendetwas nachinstalliert wird? Beide Fabriken werden
-// erzeugt und die Zahl der Decoder gezaehlt. Belegt die Zeile "keine externen
-// Abhaengigkeiten" in PLAN.md, Abschnitt 1.
+// erzeugt und die Zahl der Decoder gezählt. Belegt die Zeile "keine externen
+// Abhängigkeiten" in PLAN.md, Abschnitt 1.
 
 #include <windows.h>
 #include <wincodec.h>

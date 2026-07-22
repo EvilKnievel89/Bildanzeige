@@ -4,20 +4,20 @@
 
 namespace
 {
-    // Ein vollstaendiger Auftrag: Datei oeffnen, Seite lesen, in das Format
+    // Ein vollständiger Auftrag: Datei öffnen, Seite lesen, in das Format
     // bringen, das Direct2D annimmt, und die Pixel in den Speicher holen.
     //
     // Der Decoder wird hier erzeugt und hier wieder verworfen. Ihn stattdessen
-    // an den UI-Thread zu reichen waere naheliegend -- er ist ja schon offen --
-    // haetten dann aber zwei Apartments dasselbe Objekt in der Hand. Ein
-    // erneutes Oeffnen kostet nur das Lesen des Dateikopfes; das Dekodieren der
-    // Pixel, um das es hier geht, faellt so oder so nur einmal an.
+    // an den UI-Thread zu reichen wäre naheliegend -- er ist ja schon offen --
+    // hätten dann aber zwei Apartments dasselbe Objekt in der Hand. Ein
+    // erneutes Öffnen kostet nur das Lesen des Dateikopfes; das Dekodieren der
+    // Pixel, um das es hier geht, fällt so oder so nur einmal an.
     void Decode(IWICImagingFactory* factory, const std::wstring& path, UINT frameIndex,
                 UINT maxTexture, DecodeResult& result)
     {
         if (factory == nullptr)
         {
-            result.error = L"WIC ist auf dem Hintergrund-Thread nicht verfuegbar.";
+            result.error = L"WIC ist auf dem Hintergrund-Thread nicht verfügbar.";
             return;
         }
 
@@ -26,7 +26,7 @@ namespace
             path.c_str(), nullptr, GENERIC_READ, WICDecodeMetadataCacheOnDemand, &decoder);
         if (FAILED(hr))
         {
-            result.error = L"Datei konnte nicht geoeffnet werden.\n\n" + FormatHResult(hr);
+            result.error = L"Datei konnte nicht geöffnet werden.\n\n" + FormatHResult(hr);
             return;
         }
 
@@ -41,7 +41,7 @@ namespace
         hr = frame->GetSize(&result.sourceWidth, &result.sourceHeight);
         if (FAILED(hr) || result.sourceWidth == 0 || result.sourceHeight == 0)
         {
-            result.error = L"Bildgroesse konnte nicht bestimmt werden.\n\n" + FormatHResult(hr);
+            result.error = L"Bildgröße konnte nicht bestimmt werden.\n\n" + FormatHResult(hr);
             return;
         }
 
@@ -57,7 +57,7 @@ namespace
         }
         if (FAILED(hr))
         {
-            result.error = L"Bildformat wird nicht unterstuetzt.\n\n" + FormatHResult(hr);
+            result.error = L"Bildformat wird nicht unterstützt.\n\n" + FormatHResult(hr);
             return;
         }
 
@@ -69,10 +69,10 @@ namespace
             return;
         }
 
-        // Grossformatige Scans sprengen die Texturgrenze der GPU (je nach
-        // Geraet 8k-16k). Verkleinert wird hier, nicht spaeter im UI-Thread:
+        // Großformatige Scans sprengen die Texturgrenze der GPU (je nach
+        // Gerät 8k-16k). Verkleinert wird hier, nicht später im UI-Thread:
         // gerade bei einem solchen Bild ist das Herunterrechnen selbst die
-        // Arbeit, die das Fenster stehenlassen wuerde.
+        // Arbeit, die das Fenster stehenlassen würde.
         if (maxTexture > 0 && (result.sourceWidth > maxTexture || result.sourceHeight > maxTexture))
         {
             const double factor = static_cast<double>(maxTexture) /
@@ -101,10 +101,10 @@ namespace
             }
         }
 
-        // Hier faellt die eigentliche Arbeit an: WICBitmapCacheOnLoad zieht die
+        // Hier fällt die eigentliche Arbeit an: WICBitmapCacheOnLoad zieht die
         // Pixel sofort in den Speicher, statt sie erst beim Auslesen zu
-        // erzeugen. Genau dafuer gibt es diesen Thread -- geschaehe es erst im
-        // UI-Thread beim Hochladen zur GPU, waere nichts gewonnen.
+        // erzeugen. Genau dafür gibt es diesen Thread -- geschähe es erst im
+        // UI-Thread beim Hochladen zur GPU, wäre nichts gewonnen.
         ComPtr<IWICBitmap> bitmap;
         hr = factory->CreateBitmapFromSource(source.Get(), WICBitmapCacheOnLoad, &bitmap);
         if (FAILED(hr))
@@ -145,9 +145,9 @@ void DecodeWorker::Stop()
     }
     signal_.notify_one();
 
-    // Ein laufender Auftrag laesst sich nicht abbrechen -- WIC kennt keinen
+    // Ein laufender Auftrag lässt sich nicht abbrechen -- WIC kennt keinen
     // Weg, mitten aus dem Dekodieren herauszukommen. Beim Beenden wartet das
-    // Programm deshalb hoechstens ein Bild lang; das Fenster ist da bereits fort.
+    // Programm deshalb höchstens ein Bild lang; das Fenster ist da bereits fort.
     thread_.join();
 }
 
@@ -184,12 +184,12 @@ bool DecodeWorker::Take(DecodeResult& out)
 
 void DecodeWorker::Run()
 {
-    // Eigenes Apartment, und zwar MTA: hier haengt nichts an einem Fenster, und
-    // eine Nachrichtenschleife, wie ein STA sie braeuchte, laeuft nicht.
+    // Eigenes Apartment, und zwar MTA: hier hängt nichts an einem Fenster, und
+    // eine Nachrichtenschleife, wie ein STA sie bräuchte, läuft nicht.
     const HRESULT init = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 
     // Eine eigene Fabrik statt der des UI-Threads -- sie kostet nichts und
-    // erspart die Frage, ob zwei Threads sich eine teilen duerfen.
+    // erspart die Frage, ob zwei Threads sich eine teilen dürfen.
     ComPtr<IWICImagingFactory> factory;
     CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER,
                      IID_PPV_ARGS(&factory));
@@ -223,8 +223,8 @@ void DecodeWorker::Run()
             if (quit_)
                 break;
 
-            // Waehrend der Arbeit ist bereits der naechste Auftrag eingegangen:
-            // dieses Ergebnis ist ueberholt und wird gar nicht erst gemeldet.
+            // Während der Arbeit ist bereits der nächste Auftrag eingegangen:
+            // dieses Ergebnis ist überholt und wird gar nicht erst gemeldet.
             if (hasRequest_)
                 continue;
 

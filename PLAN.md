@@ -196,14 +196,14 @@ tools/
   mkgrenzen.cpp        riesig.jpg, ueberbreit.png, kaputt.png
   mklangsam.cpp        langsam.png
   pruefungen/
-    pruefen.ps1        uebersetzt und startet alle Pruefprogramme
-    umgebung.cpp       sind Direct2D und WIC da?            Abschnitt 1
-    decoder.cpp        welche Formate kann dieser Rechner?  Abschnitt 1
-    pixelformate.cpp   womit kommen die Bilder herein?      Abschnitt 3
-    gifdaten.cpp       was steht in einem GIF, welcher Typ? Abschnitt 5
-    ablegen.cpp        haelt die Pfadentnahme aus HDROP?    Abschnitt 6
-    brechen.cpp        was nimmt WIC nicht mehr an?         Abschnitt 7
-    drucken.cpp        was kommt beim Drucken heraus?       Abschnitt 9
+    pruefen.ps1        übersetzt und startet alle Prüfprogramme
+    umgebung.cpp       sind Direct2D und WIC da?             Abschnitt 1
+    decoder.cpp        welche Formate kann er wirklich?      Abschnitt 1, 7
+    pixelformate.cpp   womit kommen die Bilder herein?       Abschnitt 3
+    gifdaten.cpp       was steht in einem GIF, welcher Typ?  Abschnitt 5
+    ablegen.cpp        hält die Pfadentnahme aus HDROP?      Abschnitt 6
+    brechen.cpp        was nimmt WIC nicht mehr an?          Abschnitt 7
+    drucken.cpp        was kommt beim Drucken heraus?        Abschnitt 9
 ```
 
 `drucken.cpp` ist die einzige Prüfung, die Quellen der Anwendung mitübersetzt
@@ -222,6 +222,27 @@ seines Erzeugers. Neu erzeugt und Byte für Byte verglichen sind 15 der 18
 Dateien identisch — die Encoder arbeiten deterministisch, die Werkzeuge sind
 also die tatsächliche Herkunft. Die drei Ausnahmen stehen in
 [tools/README.md](tools/README.md).
+
+### Umlaute
+
+Quelltexte, Skripte und Ressourcen sind UTF-8, und Deutsch wird geschrieben,
+wie man es schreibt: `Datei konnte nicht geöffnet werden`, nicht `geoeffnet`.
+Die Umschrift war anfangs Bequemlichkeit und wurde zur Inkonsistenz, als die
+neueren Dateien echte Zeichen benutzten — auf einem Knopf stand „Schließen",
+im Meldungskasten daneben „geoeffnet".
+
+Drei Stellen tragen das:
+
+| | |
+|---|---|
+| `/utf-8` | für jede Übersetzungseinheit, auch in `pruefen.ps1` und `mktestdaten.ps1`. Ohne den Schalter liest MSVC die Dateien in der alten Zeichentabelle |
+| Byte-Reihenfolge-Marke | nur in `.ps1` und `.rc`. Windows PowerShell 5.1 und `rc.exe` raten sonst |
+| `activeCodePage` | im Manifest bereits auf UTF-8 |
+
+Bezeichner bleiben ASCII, auch die deutschen in den Prüfprogrammen
+(`PruefeWeissenGrund`, `hoehe`), und Dateinamen ebenso (`gross.png`,
+`ueberbreit.png`). Eine Umstellung, die `gross.png` in `groß.png` verwandelt,
+hat einen Fehler eingebaut, keinen behoben.
 
 ### Zuständigkeiten
 
@@ -655,7 +676,7 @@ Der offene Griff der Anwendung bleibt gültig, das erneute Öffnen im Worker
 scheitert, und die Meldung kommt an:
 
 ```
-Datei konnte nicht geoeffnet werden.
+Datei konnte nicht geöffnet werden.
 Das System kann den angegebenen Pfad nicht finden. (0x80070003)
 ```
 
@@ -690,9 +711,9 @@ falsche Handel.
 nennt `ImageDocument::Open` die Erweiterung samt ihrer Kennung im Store:
 
 ```
-Datei konnte nicht geoeffnet werden.
+Datei konnte nicht geöffnet werden.
 
-Der Decoder fuer ".jxl" ist angemeldet, laesst sich auf diesem Rechner aber
+Der Decoder für ".jxl" ist angemeldet, lässt sich auf diesem Rechner aber
 nicht erzeugen: es fehlt die JPEG XL-Bilderweiterung aus dem Microsoft Store
 (Kennung 9MZPRTH5C0TB). Auf Windows Server sind diese Erweiterungen im
 Auslieferungszustand nicht vorhanden.

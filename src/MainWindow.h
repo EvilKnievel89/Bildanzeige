@@ -75,8 +75,8 @@ private:
     HWND hwnd_ = nullptr;
     HWND tooltip_ = nullptr;
 
-    // Anwendungssymbol in den beiden Groessen, die das Fenster selbst haelt
-    // (Titelleiste und Taskleiste). Sie haengen an der DPI-Stufe und werden
+    // Anwendungssymbol in den beiden Größen, die das Fenster selbst hält
+    // (Titelleiste und Taskleiste). Sie hängen an der DPI-Stufe und werden
     // beim Wechsel neu geladen -- deshalb liegen sie hier und nicht als
     // gemeinsames Klassensymbol.
     HICON iconLarge_ = nullptr;
@@ -94,12 +94,12 @@ private:
     POINT panAnchor_{};
 
     // Marke des Auftrags, auf den gewartet wird (0 = keiner). Ergebnisse mit
-    // einer anderen Marke sind ueberholt und werden verworfen.
+    // einer anderen Marke sind überholt und werden verworfen.
     unsigned long long pendingToken_ = 0;
 
     // Erst nach einer kurzen Frist wird die Anzeige geleert. Bei einem
-    // gewoehnlichen Foto ist das Bild lange vorher da, und ein Aufblitzen des
-    // leeren Hintergrunds bei jedem Tastendruck waere schlimmer als das Warten.
+    // gewöhnlichen Foto ist das Bild lange vorher da, und ein Aufblitzen des
+    // leeren Hintergrunds bei jedem Tastendruck wäre schlimmer als das Warten.
     bool loadingShown_ = false;
 
     // Startdrehung aus EXIF, die noch auf ihr Bild wartet (-1 = keine).
@@ -114,8 +114,8 @@ private:
     UINT loopsDone_ = 0;
     LONGLONG qpcFrequency_ = 1;
 
-    // Absoluter Zeitpunkt des naechsten Einzelbildes. Faellig gewordene Zeiten
+    // Absoluter Zeitpunkt des nächsten Einzelbildes. Fällig gewordene Zeiten
     // werden aufsummiert, nicht aneinandergereiht -- sonst liefe die Wiedergabe
-    // um die Aufloesung des Timers (~15,6 ms) je Bild nach.
+    // um die Auflösung des Timers (~15,6 ms) je Bild nach.
     LONGLONG nextDueTicks_ = 0;
 };

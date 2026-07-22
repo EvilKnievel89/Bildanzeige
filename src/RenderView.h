@@ -10,39 +10,39 @@ class Toolbar;
 
 // Direct2D-Darstellung des Bildes im Fenster.
 //
-// Die WIC-Quelle wird nach dem Hochladen fallengelassen. Sie festzuhalten waere
-// bequem -- geht das Geraet verloren (GPU-Reset, Treiberwechsel), liesse sich
+// Die WIC-Quelle wird nach dem Hochladen fallengelassen. Sie festzuhalten wäre
+// bequem -- geht das Gerät verloren (GPU-Reset, Treiberwechsel), ließe sich
 // die ID2D1Bitmap ohne erneutes Lesen wiederherstellen -- kostete bei einem
-// 64-Megapixel-Bild aber dauerhaft eine viertel Gigabyte fuer einen Fall, der
+// 64-Megapixel-Bild aber dauerhaft eine viertel Gigabyte für einen Fall, der
 // jahrelang ausbleiben kann. Nach einem Verlust ist HasImage() falsch; der
-// Aufrufer laesst das Bild dann neu holen.
+// Aufrufer lässt das Bild dann neu holen.
 class RenderView
 {
 public:
     HRESULT Initialize(HWND hwnd, IWICImagingFactory* wic);
     void Shutdown();
 
-    // Neues Bild: die Ansicht faengt eingepasst und ungezoomt an.
+    // Neues Bild: die Ansicht fängt eingepasst und ungezoomt an.
     //
-    // nominalWidth/Height ist die Groesse, die in der Datei steht. Musste das
-    // Bild fuer die Texturgrenze der GPU verkleinert werden, ist die Quelle
-    // kleiner -- Massstab und "Originalgroesse" beziehen sich trotzdem auf die
-    // Zahlen der Datei, sonst zeigte "100 %" bei einem Grossformat etwas
-    // anderes als die Originalgroesse. 0 heisst: so gross wie die Quelle.
+    // nominalWidth/Height ist die Größe, die in der Datei steht. Musste das
+    // Bild für die Texturgrenze der GPU verkleinert werden, ist die Quelle
+    // kleiner -- Maßstab und "Originalgröße" beziehen sich trotzdem auf die
+    // Zahlen der Datei, sonst zeigte "100 %" bei einem Großformat etwas
+    // anderes als die Originalgröße. 0 heißt: so groß wie die Quelle.
     HRESULT SetImage(IWICBitmapSource* source, UINT nominalWidth = 0, UINT nominalHeight = 0);
 
-    // Groesste Kantenlaenge, die das Geraet als Textur annimmt (0 = unbekannt).
+    // Größte Kantenlänge, die das Gerät als Textur annimmt (0 = unbekannt).
     UINT MaxBitmapSize() const;
 
-    // Gleiche Flaeche, neuer Inhalt -- das naechste Einzelbild einer Animation.
-    // Massstab, Ausschnitt und Drehung bleiben stehen.
+    // Gleiche Fläche, neuer Inhalt -- das nächste Einzelbild einer Animation.
+    // Maßstab, Ausschnitt und Drehung bleiben stehen.
     HRESULT UpdateImage(IWICBitmapSource* source);
 
     void ClearImage();
 
     void Resize(UINT width, UINT height);
 
-    // Hoehe der Leiste am unteren Rand; das Bild wird nur darueber eingepasst.
+    // Höhe der Leiste am unteren Rand; das Bild wird nur darüber eingepasst.
     void SetToolbarHeight(float height);
 
     bool HasImage() const { return bitmap_ != nullptr; }
@@ -50,7 +50,7 @@ public:
     ViewState& View() { return state_; }
     const ViewState& View() const { return state_; }
 
-    // Liefert D2DERR_RECREATE_TARGET, wenn die Geraeteressourcen verloren sind.
+    // Liefert D2DERR_RECREATE_TARGET, wenn die Geräteressourcen verloren sind.
     HRESULT Render(Toolbar* toolbar);
 
     void DiscardDeviceResources();

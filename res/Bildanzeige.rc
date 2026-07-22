@@ -1,4 +1,4 @@
-#include <winres.h>
+﻿#include <winres.h>
 
 #include "Resource.h"
 #include "Version.h"
@@ -6,10 +6,10 @@
 // 24 == RT_MANIFEST, 1 == CREATEPROCESS_MANIFEST_RESOURCE_ID
 1 24 "app.manifest"
 
-// Die .ico bringt neun Groessen mit (16 bis 256). Windows sucht sich daraus
-// jeweils die passende: 16 fuer die Titelleiste, 32 fuer Alt+Tab, 256 fuer die
-// grosse Kachelansicht des Explorers. Deshalb liegt hier die ganze Datei und
-// nicht ein einzelnes Bild -- sonst rechnete die Shell die fehlenden Groessen
+// Die .ico bringt neun Größen mit (16 bis 256). Windows sucht sich daraus
+// jeweils die passende: 16 für die Titelleiste, 32 für Alt+Tab, 256 für die
+// große Kachelansicht des Explorers. Deshalb liegt hier die ganze Datei und
+// nicht ein einzelnes Bild -- sonst rechnete die Shell die fehlenden Größen
 // aus einer vorhandenen hoch, und genau das sieht man einem Symbol an.
 IDI_APP ICON "icon.ico"
 
@@ -32,7 +32,7 @@ BEGIN
         BLOCK "040704b0"
         BEGIN
             // FileDescription ist der Name, unter dem die Anwendung im
-            // Task-Manager und im Menue "Oeffnen mit" erscheint -- nicht der
+            // Task-Manager und im Menü "Öffnen mit" erscheint -- nicht der
             // Dateiname. Fehlt der Eintrag, steht dort "Bildanzeige.exe".
             VALUE "FileDescription", "Bildanzeige"
             VALUE "FileVersion",     VER_STRING

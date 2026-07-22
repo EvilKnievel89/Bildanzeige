@@ -2,22 +2,22 @@
 
 #include <d2d1.h>
 
-// Abbildung des Bildes in die Bildflaeche: Drehung, Massstab, Ausschnitt.
+// Abbildung des Bildes in die Bildfläche: Drehung, Maßstab, Ausschnitt.
 //
-// Der Ausschnitt wird als der Bildpunkt gefuehrt, der in der Mitte der
-// Bildflaeche liegt -- nicht als Verschiebung in Fensterpixeln. Dadurch bleibt
-// beim Zoomen und beim Groessenaendern des Fensters dieselbe Stelle im Blick,
+// Der Ausschnitt wird als der Bildpunkt geführt, der in der Mitte der
+// Bildfläche liegt -- nicht als Verschiebung in Fensterpixeln. Dadurch bleibt
+// beim Zoomen und beim Größenändern des Fensters dieselbe Stelle im Blick,
 // statt dass das Bild unter dem Zeiger fortwandert.
 //
-// Es gibt genau zwei Zustaende: eingepasst (der Massstab folgt dem Fenster) und
-// frei (Massstab und Ausschnitt sind gesetzt). Herauszoomen endet stets wieder
-// beim Einpassen; kleiner als noetig wird nicht gezeigt.
+// Es gibt genau zwei Zustände: eingepasst (der Maßstab folgt dem Fenster) und
+// frei (Maßstab und Ausschnitt sind gesetzt). Herauszoomen endet stets wieder
+// beim Einpassen; kleiner als nötig wird nicht gezeigt.
 class ViewState
 {
 public:
     void SetImageSize(D2D1_SIZE_F size);
     void SetViewport(D2D1_SIZE_F size);
-    void Reset();                       // zurueck aufs Einpassen, Drehung bleibt
+    void Reset();                       // zurück aufs Einpassen, Drehung bleibt
 
     void Rotate(int quarters);
     void SetRotation(int quarters);     // Startdrehung, etwa aus EXIF
@@ -41,7 +41,7 @@ public:
     D2D1_RECT_F DestRect() const;   // Zielrechteck der gedrehten Ansicht
 
 private:
-    D2D1_SIZE_F Shown() const;      // Groesse nach Drehung
+    D2D1_SIZE_F Shown() const;      // Größe nach Drehung
     float FitScale() const;
     D2D1_POINT_2F Center() const;
     D2D1_POINT_2F ClampCenter(D2D1_POINT_2F center, float scale) const;

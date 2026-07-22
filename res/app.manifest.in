@@ -16,10 +16,10 @@
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
     <security>
       <requestedPrivileges>
-        <!-- Ein Bildbetrachter hat nichts zu erhoehen. Ohne diese Angabe waere
-             das zwar auch das Verhalten, aber Windows raet bei Programmen ohne
+        <!-- Ein Bildbetrachter hat nichts zu erhöhen. Ohne diese Angabe wäre
+             das zwar auch das Verhalten, aber Windows rät bei Programmen ohne
              Angabe aus dem Dateinamen, ob es sich um ein Installationsprogramm
-             handelt. Hier steht es ausdruecklich. -->
+             handelt. Hier steht es ausdrücklich. -->
         <requestedExecutionLevel level="asInvoker" uiAccess="false"/>
       </requestedPrivileges>
     </security>
@@ -30,13 +30,13 @@
       <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
       <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true/pm</dpiAware>
       <activeCodePage xmlns="http://schemas.microsoft.com/SMI/2019/WindowsSettings">UTF-8</activeCodePage>
-      <!-- longPathAware steht hier bewusst nicht. Die eigenen Puffer waeren
-           dafuer bereit (nirgends MAX_PATH, ueberall std::wstring), aber die
+      <!-- longPathAware steht hier bewusst nicht. Die eigenen Puffer wären
+           dafür bereit (nirgends MAX_PATH, überall std::wstring), aber die
            Pfadhilfen aus shlwapi sind es nicht: PathIsDirectoryW,
-           PathFindFileNameW und PathFindExtensionW hoeren bei 260 Zeichen auf.
-           Der Schalter verspraeche also mehr, als der Code haelt.
-           (Zwei Bindestriche nacheinander duerfen in einem XML-Kommentar
-           uebrigens nicht stehen, auch wenn sie sonst ueberall im Projekt
+           PathFindFileNameW und PathFindExtensionW hören bei 260 Zeichen auf.
+           Der Schalter verspräche also mehr, als der Code hält.
+           (Zwei Bindestriche nacheinander dürfen in einem XML-Kommentar
+           übrigens nicht stehen, auch wenn sie sonst überall im Projekt
            den Gedankenstrich vertreten.) -->
     </windowsSettings>
   </application>

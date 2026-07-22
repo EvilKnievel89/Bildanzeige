@@ -36,7 +36,7 @@ void ViewState::Rotate(int quarters)
 {
     rotation_ = ((rotation_ + quarters) % 4 + 4) % 4;
 
-    // Der bisherige Ausschnitt liesse sich mitdrehen, ergaebe aber selten das,
+    // Der bisherige Ausschnitt ließe sich mitdrehen, ergäbe aber selten das,
     // was der Betrachter erwartet: nach dem Drehen sucht man den Bildmittelpunkt.
     const D2D1_SIZE_F shown = Shown();
     center_ = D2D1::Point2F(shown.width * 0.5f, shown.height * 0.5f);
@@ -61,7 +61,7 @@ float ViewState::FitScale() const
         return 1.0f;
     }
 
-    // Kleine Bilder bleiben in Originalgroesse stehen, statt aufgeblasen zu
+    // Kleine Bilder bleiben in Originalgröße stehen, statt aufgeblasen zu
     // werden -- so verhielt sich auch die alte Bild- und Faxanzeige.
     return std::min(1.0f, std::min(viewport_.width / shown.width,
                                    viewport_.height / shown.height));
@@ -78,7 +78,7 @@ D2D1_POINT_2F ViewState::ClampCenter(D2D1_POINT_2F center, float scale) const
 
     // Passt das Bild in eine Richtung ohnehin hinein, wird es dort mittig
     // gesetzt; sonst wird so begrenzt, dass am Rand kein Streifen Hintergrund
-    // auftaucht. Das haelt das Bild beim Ziehen buendig am Fensterrand.
+    // auftaucht. Das hält das Bild beim Ziehen bündig am Fensterrand.
     if (shown.width * scale <= viewport_.width)
     {
         center.x = shown.width * 0.5f;
@@ -135,7 +135,7 @@ void ViewState::ActualSize()
         return;
 
     // Die betrachtete Stelle bleibt erhalten: wer in eine Ecke gezoomt hat und
-    // auf Originalgroesse wechselt, findet dort dieselbe Ecke wieder.
+    // auf Originalgröße wechselt, findet dort dieselbe Ecke wieder.
     const D2D1_POINT_2F center = Center();
     fit_ = false;
     scale_ = 1.0f;

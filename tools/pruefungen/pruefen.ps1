@@ -1,12 +1,12 @@
-# Uebersetzt alle Pruefprogramme und laesst sie nacheinander laufen.
+﻿# Übersetzt alle Prüfprogramme und lässt sie nacheinander laufen.
 #
 #     tools\pruefungen\pruefen.ps1
 #     tools\pruefungen\pruefen.ps1 -Nur brechen,gifdaten
 #
 # Sie beantworten die Fragen, auf denen PLAN.md steht -- welche Decoder es
 # gibt, in welchem Format ein Fax hereinkommt, was in einem GIF wirklich
-# steht. Wer den Zahlen dort nicht traut, laesst das hier laufen und sieht
-# nach. Uebersetzt wird nach %TEMP%; im Arbeitsbaum bleibt nichts liegen.
+# steht. Wer den Zahlen dort nicht traut, lässt das hier laufen und sieht
+# nach. Übersetzt wird nach %TEMP%; im Arbeitsbaum bleibt nichts liegen.
 
 param(
     [string[]]$Nur
@@ -23,7 +23,7 @@ $wurzel = Split-Path (Split-Path $hier -Parent) -Parent
 $testdata = Join-Path $wurzel "testdata"
 $src = Join-Path $wurzel "src"
 
-# Reihenfolge mit Absicht: erst ob ueberhaupt etwas da ist, dann was es kann,
+# Reihenfolge mit Absicht: erst ob überhaupt etwas da ist, dann was es kann,
 # dann die einzelnen Befunde.
 $pruefungen = @(
     @{ Name = "umgebung";     Frage = "Sind Direct2D und WIC da?";                Args = @() },
@@ -32,11 +32,11 @@ $pruefungen = @(
        Args = @("$testdata\fax.tif", "$testdata\mehrseitig.tif") },
     @{ Name = "gifdaten";     Frage = "Was steht in einem GIF, und als welcher Typ?";
        Args = @("$testdata\anim.gif") },
-    @{ Name = "ablegen";      Frage = "Haelt die Pfadentnahme aus einem HDROP?";  Args = @() },
+    @{ Name = "ablegen";      Frage = "Hält die Pfadentnahme aus einem HDROP?";  Args = @() },
     @{ Name = "brechen";      Frage = "Was nimmt WIC wirklich nicht mehr an?";
        Args = @("$testdata\gross.png", "$testdata\dreh1.jpg") },
 
-    # Die einzige Pruefung, die Quellen der Anwendung mituebersetzt: gerechnet
+    # Die einzige Prüfung, die Quellen der Anwendung mitübersetzt: gerechnet
     # werden soll mit genau der Funktion, die auch druckt, nicht mit einer
     # nachgebauten. Sie legt PDFs an und braucht deshalb ein Arbeitsverzeichnis.
     @{ Name = "drucken";      Frage = "Was kommt beim Drucken heraus?";
@@ -46,7 +46,7 @@ $pruefungen = @(
 )
 
 if ($Nur) { $pruefungen = $pruefungen | Where-Object { $Nur -contains $_.Name } }
-if (-not $pruefungen) { throw "Keine der genannten Pruefungen gefunden." }
+if (-not $pruefungen) { throw "Keine der genannten Prüfungen gefunden." }
 
 if (-not (Get-Command cl.exe -ErrorAction SilentlyContinue)) {
     $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
@@ -63,8 +63,8 @@ New-Item -ItemType Directory -Path $bau | Out-Null
 $vorher = (Get-Location).Path
 $fehler = 0
 try {
-    # brechen.exe legt seine Bastelstuecke im laufenden Verzeichnis an und
-    # raeumt sie selbst wieder weg -- deshalb wird dort gearbeitet, nicht im
+    # brechen.exe legt seine Bastelstücke im laufenden Verzeichnis an und
+    # räumt sie selbst wieder weg -- deshalb wird dort gearbeitet, nicht im
     # Arbeitsbaum.
     Set-Location $bau
     foreach ($p in $pruefungen) {
@@ -80,13 +80,13 @@ try {
         Write-Output ("=" * 72)
         if ($LASTEXITCODE -ne 0) {
             $log
-            Write-Output "  UEBERSETZEN FEHLGESCHLAGEN"
+            Write-Output "  ÜBERSETZEN FEHLGESCHLAGEN"
             $fehler++
             continue
         }
         & "$bau\$($p.Name).exe" @($p.Args)
         if ($LASTEXITCODE -ne 0) {
-            Write-Output ("  -> Rueckgabewert {0}" -f $LASTEXITCODE)
+            Write-Output ("  -> Rückgabewert {0}" -f $LASTEXITCODE)
             $fehler++
         }
     }
@@ -97,6 +97,6 @@ finally {
 }
 
 Write-Output ""
-if ($fehler -eq 0) { Write-Output "Alle Pruefungen durchgelaufen." }
-else { Write-Output "$fehler Pruefung(en) mit Beanstandung." }
+if ($fehler -eq 0) { Write-Output "Alle Prüfungen durchgelaufen." }
+else { Write-Output "$fehler Prüfung(en) mit Beanstandung." }
 exit $fehler

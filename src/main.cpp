@@ -11,7 +11,7 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR, int showCmd)
     if (FAILED(hr))
         return 1;
 
-    // Wird fuer das Tooltip-Fenster der Icon-Leiste gebraucht.
+    // Wird für das Tooltip-Fenster der Icon-Leiste gebraucht.
     INITCOMMONCONTROLSEX controls{};
     controls.dwSize = sizeof(controls);
     controls.dwICC = ICC_BAR_CLASSES;
