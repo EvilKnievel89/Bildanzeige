@@ -1,0 +1,51 @@
+# Baut die Anwendung auf einem Windows-Runner, sobald ein Tag der Form v*
+# gepusht wird, und legt ein GitHub-Release mit der fertigen EXE an.
+# Gewöhnliche Pushes und Pull Requests lösen keinen Lauf aus; über den
+# Actions-Tab lässt sich zusätzlich von Hand bauen (dann ohne Release,
+# die EXE liegt als Artefakt am Lauf).
+#
+# Die Runner bringen MSVC, CMake und Ninja bereits mit. Was fehlt, ist die
+# eingerichtete Compiler-Umgebung (vcvars) -- die stellt msvc-dev-cmd her,
+# damit das Preset msvc-x64 sein cl.exe findet.
+
+name: Build
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write   # zum Anlegen des Release; für den reinen Bau ohne Belang
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: MSVC-Umgebung einrichten
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Konfigurieren
+        run: cmake --preset msvc-x64
+
+      - name: Bauen (Release)
+        run: cmake --build --preset release
+
+      # Für von Hand gestartete Läufe (ohne Tag, also ohne Release) ist
+      # das Artefakt der einzige Weg, an die gebaute EXE zu kommen.
+      - name: Artefakt ablegen
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bildanzeige
+          path: build/Release/Bildanzeige.exe
+
+      - name: Release anlegen
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/Release/Bildanzeige.exe
+          generate_release_notes: true
