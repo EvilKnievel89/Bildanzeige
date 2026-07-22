@@ -3,6 +3,8 @@
 Schlanker Bildbetrachter für Windows im Geist der alten *Windows Bild- und
 Faxanzeige*. Win32 + WIC + Direct2D, keine externen Abhängigkeiten.
 
+![Screenshot of ui.](/screenshots/screenshot-ui.png)
+
 Planung und Entwurf: [PLAN.md](PLAN.md) · Lizenz: [MIT mit Commons
 Clause](LICENSE) — alles erlaubt außer Verkaufen
 
