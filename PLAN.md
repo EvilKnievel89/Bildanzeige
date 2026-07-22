@@ -168,7 +168,20 @@ tools/
   mkordner.cpp         ordner/Bild*.png, dreh1..8.jpg
   mkgrenzen.cpp        riesig.jpg, ueberbreit.png, kaputt.png
   mklangsam.cpp        langsam.png
+  pruefungen/
+    pruefen.ps1        uebersetzt und startet alle Pruefprogramme
+    umgebung.cpp       sind Direct2D und WIC da?            Abschnitt 1
+    decoder.cpp        welche Formate kann dieser Rechner?  Abschnitt 1
+    pixelformate.cpp   womit kommen die Bilder herein?      Abschnitt 3
+    gifdaten.cpp       was steht in einem GIF, welcher Typ? Abschnitt 5
+    ablegen.cpp        haelt die Pfadentnahme aus HDROP?    Abschnitt 6
+    brechen.cpp        was nimmt WIC nicht mehr an?         Abschnitt 7
 ```
+
+Die Programme unter `pruefungen/` gehören nicht zur Anwendung. Sie sind der
+Beleg für die Zahlen in diesem Dokument: jede beantwortet eine Frage, und wer
+der Antwort nicht traut, lässt sie laufen — siehe
+[tools/pruefungen/README.md](tools/pruefungen/README.md).
 
 Kein Prüfbild ist von Hand gemalt: jedes hat einen Zweck, und der steht im Kopf
 seines Erzeugers. Neu erzeugt und Byte für Byte verglichen sind 15 der 18

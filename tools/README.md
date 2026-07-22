@@ -1,4 +1,17 @@
-# Erzeuger der Testdaten
+# Werkzeuge
+
+Zweierlei liegt hier: die **Erzeuger der Testdaten** und die
+**[Prüfprogramme](pruefungen/)**. Jene legen an, womit geprüft wird; diese
+beantworten die Fragen, auf denen [PLAN.md](../PLAN.md) steht — welche Decoder
+es gibt, in welchem Format ein Fax hereinkommt, was WIC an einer beschädigten
+Datei noch durchgehen lässt. Beide sind mit einem Aufruf zu haben:
+
+```bat
+tools\mktestdaten.ps1              Testdaten neu erzeugen
+tools\pruefungen\pruefen.ps1       alle Prüfungen laufen lassen
+```
+
+## Erzeuger der Testdaten
 
 Alles in [testdata/](../testdata/) entsteht hier. Kein Bild ist irgendwo
 heruntergeladen oder von Hand gemalt; jede Datei hat einen Zweck, und der steht
