@@ -19,10 +19,10 @@ cmake --build --preset release
 ```
 
 Ergebnis: `build\Release\Bildanzeige.exe` — eine einzelne, portable EXE von
-512 KB. Sie braucht kein Redistributable: die CRT ist statisch eingebunden, und
+544 KB. Sie braucht kein Redistributable: die CRT ist statisch eingebunden, und
 importiert werden nur Systembibliotheken (`d2d1`, `ole32`, `shlwapi`,
 `shell32`, `user32`, `comctl32`, `comdlg32`, `gdi32`, `winspool.drv`,
-`kernel32`).
+`advapi32`, `kernel32`).
 Anwendungssymbol, Manifest und Versionsangaben stecken darin; kopieren genügt,
 installiert wird nichts.
 
@@ -41,6 +41,13 @@ build\Release\Bildanzeige.exe testdata\gross.png
 Statt einer Datei lässt sich auch ein Ordner übergeben; dann erscheint das erste
 Bild darin. Ohne Argument öffnet sich ein leeres Fenster. Dateien und Ordner
 können auch auf das Fenster gezogen werden.
+
+Zwei Schalter richten die Dateizuordnungen ohne Fenster ein — siehe unten:
+
+```bat
+Bildanzeige.exe /registrieren
+Bildanzeige.exe /abmelden
+```
 
 | Taste | Funktion |
 |---|---|
@@ -126,6 +133,35 @@ erste Lücke; für die zweite blättert man in ihr zur gewünschten Seite, die d
 als aktuelle Seite in den Auftrag geht. Näheres in [PLAN.md](PLAN.md),
 Abschnitt 9.
 
+Im **Fenstermenü** (Alt+Leertaste oder Rechtsklick auf die Titelleiste) steht
+vor „Schließen" der Eintrag „Dateizuordnungen …". Dort lässt sich die
+Bildanzeige für die gängigen Bildformate eintragen — angehakt wird jede Endung
+einzeln, `Übernehmen` schreibt genau die angehakten und nimmt die übrigen
+zurück. Ein Haken weniger ist damit zugleich das Abmelden; sind am Ende alle
+fort, bleibt nichts stehen.
+
+Wohin die Einträge gehen, entscheidet der Start: gewöhnlich gestartet nach
+`HKEY_CURRENT_USER` (nur für den angemeldeten Benutzer), als Administrator
+gestartet nach `HKEY_LOCAL_MACHINE` (für alle Benutzer des Rechners). Der Kopf
+des Fensters sagt, welcher der beiden Fälle gerade zutrifft. Dieselbe Regel
+gilt für `/registrieren` und `/abmelden`, die den gängigen Satz Endungen ohne
+Rückfrage eintragen bzw. sämtliche Einträge zurücknehmen; ihre Auskunft ist der
+Rückgabewert (0 geglückt, 1 nicht), damit sie sich aus einem Skript heraus
+aufrufen lassen.
+
+**Eingetragen ist nicht dasselbe wie Standard.** Der Eintrag stellt die
+Bildanzeige unter „Öffnen mit" und in den Windows-Einstellungen zur Wahl; wer
+sie zum Standard machen will, trifft diese Wahl dort. Seit Windows 8 kann das
+keine Anwendung mehr für den Benutzer erledigen — der Knopf „Als Standard
+festlegen …" führt deshalb auf direktem Weg zur richtigen Seite der
+Einstellungen. Wer die Bildanzeige später abmeldet und für eine Endung ihr
+Standard war, wird von Windows beim nächsten Doppelklick wieder gefragt.
+
+WebP, HEIC, AVIF und JPEG XL stehen nicht zur Wahl, obwohl die Anwendung sie
+anzeigt, sobald der Rechner sie kann: ihre Decoder stecken in Erweiterungen aus
+dem Store, und eine Zuordnung für ein Format, das sich hier vielleicht gar
+nicht öffnen lässt, wäre ein Versprechen auf einen Fehlertext.
+
 Im Vollbild bleibt die Icon-Leiste stehen. Ohne Rahmen und Menü ist sie der
 einzige sichtbare Rückweg, und vierzig Punkte am unteren Rand kosten auf einem
 großen Schirm knapp drei Prozent der Fläche.
@@ -144,16 +180,16 @@ bedeutet also weiterhin, was in der Datei steht.
 
 ## Stand
 
-**Version 1.2.2**, alle zehn Meilensteine abgeschlossen — Fenster,
+**Version 1.3.0**, alle elf Meilensteine abgeschlossen — Fenster,
 Direct2D-Darstellung, Datei per Kommandozeile, Multi-Frame-Dekodierung,
 Seitenwechsel, Icon-Leiste, Rotation, Zoom, Verschieben, Einpassen und
 Originalgröße, GIF-Animation, Ordnernavigation, Drag & Drop,
 EXIF-Orientierung, Hintergrund-Dekodierung, Vollbild, DPI-Wechsel,
-Fehlerbehandlung, Anwendungssymbol, Versionsangaben, Release-Build sowie
-Drucken mit Seitenansicht.
+Fehlerbehandlung, Anwendungssymbol, Versionsangaben, Release-Build,
+Drucken mit Seitenansicht sowie die Dateiregistrierung.
 
-Was bewusst nicht darin steckt — Rotation speichern, Löschen, Diashow,
-Registrierung als Standardanwendung — steht in [PLAN.md](PLAN.md).
+Was bewusst nicht darin steckt — Rotation speichern, Löschen, Diashow — steht
+in [PLAN.md](PLAN.md).
 
 ## Lizenz
 

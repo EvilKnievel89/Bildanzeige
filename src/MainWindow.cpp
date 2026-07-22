@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 
+#include "AssociationDialog.h"
 #include "PrintPreview.h"
 #include "Resource.h"
 
@@ -21,6 +22,11 @@ namespace
 
     constexpr UINT_PTR kAnimationTimer = 1;
     constexpr UINT_PTR kLoadingTimer = 2;
+
+    // Eigener Befehl im Fenstermenü. Windows benutzt die unteren vier Bits von
+    // wParam in WM_SYSCOMMAND für sich, und alles ab 0xF000 gehört ihm ohnehin
+    // -- deshalb eine Zahl darunter und ein Vielfaches von 16.
+    constexpr UINT kSysCmdAssociations = 0x1010;
 
     // Meldung des Hintergrund-Threads, dass ein Auftrag fertig ist.
     constexpr UINT kDecodeReady = WM_APP + 1;
@@ -161,6 +167,27 @@ LRESULT MainWindow::HandleMessage(UINT msg, WPARAM wParam, LPARAM lParam)
 
         decoder_.Start(hwnd_, kDecodeReady);
 
+        // Die Dateizuordnungen hängen im Fenstermenü und nicht in der
+        // Icon-Leiste: die zeigt, was mit dem Bild geschieht, das gerade
+        // dasteht. Sich als Betrachter einzutragen ist dagegen eine Sache der
+        // Einrichtung -- einmal getroffen, dann nie wieder angerührt. Der
+        // Eintrag steht vor "Schließen"; misslingt das (ein Fenstermenü ohne
+        // SC_CLOSE gibt es eigentlich nicht), wird er hinten angehängt.
+        if (HMENU menu = GetSystemMenu(hwnd_, FALSE))
+        {
+            constexpr wchar_t caption[] = L"&Dateizuordnungen …";
+            if (!InsertMenuW(menu, SC_CLOSE, MF_BYCOMMAND | MF_STRING, kSysCmdAssociations,
+                             caption))
+            {
+                AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
+                AppendMenuW(menu, MF_STRING, kSysCmdAssociations, caption);
+            }
+            else
+            {
+                InsertMenuW(menu, SC_CLOSE, MF_BYCOMMAND | MF_SEPARATOR, 0, nullptr);
+            }
+        }
+
         ApplyDpi(GetDpiForWindow(hwnd_));
         CreateTooltip();
         UpdateToolbarState();
@@ -268,6 +295,22 @@ LRESULT MainWindow::HandleMessage(UINT msg, WPARAM wParam, LPARAM lParam)
         RecreateDeviceResources();
         InvalidateRect(hwnd_, nullptr, FALSE);
         return 0;
+
+    case WM_SYSCOMMAND:
+        // Maskiert verglichen: die unteren vier Bits sind nicht die eigenen.
+        if ((wParam & 0xFFF0) == kSysCmdAssociations)
+        {
+            // Angehalten wird wie vor dem Druckdialog: das Fenster ist zwar
+            // gesperrt, aber der Zeitgeber schlägt in der Nachrichtenschleife
+            // des Dialogs weiter, und eine Animation, die hinter einem
+            // gesperrten Fenster weiterläuft, kostet nur Strom.
+            StopPlayback();
+            ShowAssociationDialog(hwnd_);
+            ApplyButtonStates();
+            UpdateTitle();
+            return 0;
+        }
+        break;
 
     case WM_KEYDOWN:
         OnKeyDown(wParam);

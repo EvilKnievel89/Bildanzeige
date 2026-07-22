@@ -15,7 +15,7 @@ Fenster zeigt das Bild, darunter eine Icon-Leiste für die häufigen Handgriffe.
 | Rendering | Direct2D (`d2d1`) | GPU-Skalierung, saubere Transformationen |
 | COM-Handles | `Microsoft::WRL::ComPtr` (`<wrl/client.h>`) | Teil des SDK |
 
-Keine externen Abhängigkeiten. Ergebnis ist eine einzelne EXE (512 KB, davon
+Keine externen Abhängigkeiten. Ergebnis ist eine einzelne EXE (544 KB, davon
 166 KB Anwendungssymbol), portabel — siehe Abschnitt 8.
 
 ### Verifizierte Umgebung
@@ -93,6 +93,13 @@ Gruppen von links nach rechts:
    Zeitgeber und Trefferprüfung zu führen; und ohne Rahmen und Menü ist sie
    der einzige sichtbare Rückweg. Vierzig Punkte am unteren Rand kosten auf
    einem 1440er Schirm knapp drei Prozent der Fläche.
+
+Was nicht in der Leiste steht, steht im **Fenstermenü** (Alt+Leertaste oder
+Rechtsklick auf die Titelleiste): der Eintrag „Dateizuordnungen …" vor
+„Schließen". Die Leiste zeigt, was mit dem Bild geschieht, das gerade dasteht;
+sich als Betrachter für `.jpg` einzutragen ist dagegen eine Sache der
+Einrichtung — einmal getroffen und dann nie wieder angerührt. Näheres in
+Abschnitt 10.
 
 ### Icons
 
@@ -175,6 +182,8 @@ src/
   DecodeWorker.*       Dekodierung im Hintergrund-Thread
   Printer.*            Druckdialog, Einpassen aufs Blatt, Ausgabe über GDI
   PrintPreview.*       Seitenansicht: Metadatei aufs Blatt, Seitenschritte
+  FileAssociation.*    Registrierung: ProgIds, Capabilities, HKCU oder HKLM
+  AssociationDialog.*  Dateizuordnungen: Ankreuzliste der Endungen
 res/
   Bildanzeige.rc       bindet Manifest, Symbol und Versionsblock ein
   Resource.h           Kennungen der Ressourcen
@@ -847,13 +856,13 @@ cmake --preset msvc-x64
 cmake --build --preset release
 ```
 
-Ergebnis ist **eine Datei**, 523 776 Byte, davon 166 KB Symbol. Sie braucht
+Ergebnis ist **eine Datei**, 557 568 Byte, davon 166 KB Symbol. Sie braucht
 kein Redistributable: die CRT ist statisch eingebunden, und im Importverzeichnis
 stehen nur Systembibliotheken.
 
 | | |
 |---|---|
-| Eingetragene DLLs | `d2d1`, `ole32`, `shlwapi`, `shell32`, `user32`, `comctl32`, `comdlg32`, `gdi32`, `winspool.drv`, `kernel32` |
+| Eingetragene DLLs | `d2d1`, `ole32`, `shlwapi`, `shell32`, `user32`, `comctl32`, `comdlg32`, `gdi32`, `winspool.drv`, `advapi32`, `kernel32` |
 | Laufzeit-DLLs | keine |
 | Kennzeichen | High Entropy VA, Dynamic Base, NX, Terminal Server Aware |
 | Sprungprüfung | Guard Flags `10017500`, CF instrumented |
@@ -1120,7 +1129,188 @@ der unbemalte Rest belegt, dass die Einpassung erhalten bleibt und das Bild
 nicht über das Blatt gezerrt wird. Die Zahlen gehen auf: 600 × 800 abgespielte
 Punkte, davon 600 × 300 für ein Bild im Verhältnis 2 : 1 über die volle Breite.
 
-## 10. Meilensteine
+## 10. Dateiregistrierung
+
+### Eingetragen wird die Fähigkeit, nicht die Wahl
+
+Das ist der ganze Abschnitt in einem Satz, und er ist keine Bescheidenheit,
+sondern Windows. Bis Windows 7 trug sich eine Anwendung selbst als Standard für
+`.jpg` ein, indem sie den Vorgabewert von `HKCU\Software\Classes\.jpg` auf ihre
+ProgId setzte. Seit Windows 8 entscheidet stattdessen `UserChoice` unter
+`…\Explorer\FileExts\.jpg`, und dieser Wert trägt eine Prüfsumme aus Endung,
+ProgId, Benutzerkennung und einem Zeitstempel, die nur Windows selbst bilden
+kann. Wer ihn ohne sie schreibt, erreicht nur, dass Windows die Zuordnung
+verwirft und beim nächsten Doppelklick nachfragt.
+
+Die Anwendung trägt sich deshalb als *möglicher* Betrachter ein — sie erscheint
+unter „Öffnen mit" und in den Einstellungen unter „Standard-Apps" — und führt
+für die Wahl selbst dorthin, wo sie zu treffen ist. Der Vorgabewert der
+Endungsschlüssel bleibt unangetastet. Das ist kein Umweg, sondern der einzige
+Weg, der auch morgen noch funktioniert.
+
+### Was geschrieben wird
+
+Zweig ist `HKEY_CURRENT_USER` oder `HKEY_LOCAL_MACHINE`, sonst ist alles gleich:
+
+```
+Software\Classes\Bildanzeige.jpg              ProgId, eine je Endung
+    (Vorgabe), FriendlyTypeName               "JPEG-Bild" -- Spalte "Typ"
+    DefaultIcon                               "<EXE>",0
+    shell\open\command                        "<EXE>" "%1"
+Software\Classes\.jpg\OpenWithProgids
+    Bildanzeige.jpg                           leerer Wert: reiht sich in
+                                              "Öffnen mit" ein
+Software\Classes\Applications\Bildanzeige.exe
+    FriendlyAppName, DefaultIcon, shell\open\command, SupportedTypes\.jpg
+Software\Bildanzeige\Capabilities
+    ApplicationName, ApplicationDescription, ApplicationIcon
+    FileAssociations\.jpg = Bildanzeige.jpg
+Software\RegisteredApplications
+    Bildanzeige = Software\Bildanzeige\Capabilities
+```
+
+Die letzten beiden Blöcke sind es, die die Anwendung in den Einstellungen
+überhaupt erscheinen lassen: `RegisteredApplications` ist das Verzeichnis, in
+dem Windows nachsieht, `Capabilities` der Eintrag, den es dort findet. Ohne sie
+stünde die Bildanzeige zwar in „Öffnen mit", ließe sich aber nicht zum Standard
+machen.
+
+Der Zweig unter `Applications` heißt nach der EXE und nicht nach der Anwendung.
+Wer sie umbenennt, wird unter dem neuen Namen eingetragen — Windows sucht dort
+nach dem Dateinamen, nicht nach dem Programm.
+
+Der Pfad wird bei jedem Übernehmen neu geschrieben. Die EXE ist tragbar: wer
+sie in einen anderen Ordner legt, rückt den Eintrag damit wieder gerade, ohne
+ihn vorher abmelden zu müssen.
+
+### Je Endung eine eigene ProgId
+
+`Bildanzeige.jpg`, `Bildanzeige.png`, `Bildanzeige.tiff` — nicht eine
+gemeinsame `Bildanzeige.Bild` für alles. Eine einzige wäre weniger Arbeit,
+aber der Explorer nimmt aus der ProgId die Spalte „Typ": mit ihr hieße jede
+Bilddatei gleich, und aus „JPEG-Bild" und „PNG-Bild" würde zweimal „Bild".
+Windows hält es bei seinen eigenen Zuordnungen genauso.
+
+### HKCU oder HKLM entscheidet der Lauf, nicht der Benutzer
+
+Wer die Bildanzeige gewöhnlich startet, trägt für sich ein; wer sie als
+Administrator startet, für alle Benutzer des Rechners. Im Fenster steht keine
+Wahl dazu — sie wäre eine, die man nicht treffen kann: die Rechte stehen fest,
+bevor das Fenster steht.
+
+Gefragt ist dabei nicht, ob der angemeldete Benutzer Administrator *ist*,
+sondern ob dieser Lauf nach `HKEY_LOCAL_MACHINE` schreiben *darf*. Unter der
+Benutzerkontensteuerung bekommt auch ein Administrator ein beschnittenes
+Zugriffstoken, solange er nicht ausdrücklich erhöht startet, und mit dem kommt
+er dort nicht hinein. `IsUserAnAdmin` beantwortete die falsche Frage und ergäbe
+einen Dialog, der HKLM verspricht und an „Zugriff verweigert" scheitert.
+`GetTokenInformation` mit `TokenElevation` beantwortet die richtige.
+
+Ein Eintrag im Zweig des Rechners wirkt auch dann weiter, wenn man später
+gewöhnlich startet. Der Kopf des Fensters sagt es in diesem Fall ausdrücklich —
+wer es nicht liest, sucht den Grund sonst vergebens im eigenen Zweig.
+
+### Welche Endungen zur Wahl stehen
+
+Dieselben elf, die `FolderNavigator` als Notnagel führt: `.bmp`, `.dib`,
+`.gif`, `.ico`, `.jfif`, `.jpe`, `.jpeg`, `.jpg`, `.png`, `.tif`, `.tiff` —
+die Formate, die jede Windows-Installation von sich aus dekodiert.
+
+WebP, HEIC, AVIF und JPEG XL stehen mit Bedacht nicht darin, obwohl die
+Anwendung sie anzeigt, sobald der Rechner sie kann. Ihre Decoder sind
+angemeldet, stecken aber in Erweiterungen aus dem Store (Abschnitt 7). Sich für
+ein Format einzutragen, das auf diesem Rechner vielleicht gar nicht zu öffnen
+ist, hieße dem Benutzer eine Zuordnung anzubieten, die im Fehlertext endet.
+Hier ist die Liste aus dem Code der ehrlichere Weg als die aus den angemeldeten
+Decodern — anders als beim Blättern im Ordner, wo ein nachinstalliertes Format
+von selbst mitkommen soll.
+
+`.ico` ist als einziges nicht vorgehakt: ein Symbol ist eher Zubehör eines
+Programms als ein Bild, das man betrachtet. Anzeigen lässt es sich trotzdem,
+und wer es zuordnen will, hakt es an.
+
+### Der Weg dorthin
+
+Der Eintrag „Dateizuordnungen …" steht im **Fenstermenü**, vor „Schließen", und
+nicht in der Icon-Leiste. Die Leiste zeigt, was mit dem Bild geschieht, das
+gerade dasteht; sich als Betrachter einzutragen ist dagegen eine Sache der
+Einrichtung, einmal getroffen und dann nie wieder angerührt. Ein zwölfter Knopf
+dafür stünde jeden Tag im Weg für etwas, das man einmal im Jahr tut.
+
+Daneben gibt es zwei Schalter für die Kommandozeile:
+
+```bat
+Bildanzeige.exe /registrieren     :: den vorgehakten Satz eintragen
+Bildanzeige.exe /abmelden         :: sämtliche Einträge zurücknehmen
+```
+
+Beide arbeiten ohne Fenster und ohne Meldung; die Auskunft ist der
+Rückgabewert (0 geglückt, 1 nicht). Ein Meldungskasten wäre hier ein Fehler:
+aus einem Einrichtungsskript aufgerufen bliebe er stehen, bis jemand ihn
+wegklickt, und niemand sieht zu. Auch für sie entscheiden die Rechte des Laufs
+über den Zweig — `/registrieren` in einer erhöhten Eingabeaufforderung trägt
+für alle ein.
+
+### Der Standard wird nicht genommen, sondern gegeben
+
+Der Knopf „Als Standard festlegen …" öffnet
+`ms-settings:defaultapps?registeredAppUser=Bildanzeige` (erhöht:
+`registeredAppMachine=`). Windows 11 führt damit unmittelbar auf die Seite der
+Anwendung, auf der jede eingetragene Endung mit einem eigenen Knopf steht.
+Kennt eine Fassung den Zusatz nicht, öffnet sie die Übersicht — deshalb genügt
+als Rückfallweg dieselbe Adresse ohne ihn. Erst wenn auch das misslingt, sagt
+eine Meldung, wo es im Explorer sonst noch geht („Öffnen mit" → „Andere App
+auswählen").
+
+Der Knopf bleibt grau, solange nichts eingetragen ist. Er führte sonst auf eine
+Seite, auf der die Bildanzeige gar nicht steht.
+
+### Abräumen
+
+Wer einen Haken wegnimmt und übernimmt, ist die Endung wieder los; wer alle
+wegnimmt, ist alles los — ProgIds, `Applications`-Zweig, `Capabilities` und der
+Verweis in `RegisteredApplications`. Ein eigener Knopf „Alles abmelden" wäre
+derselbe Handgriff mit einem zweiten Namen.
+
+Entfernt wird dabei nur die eigene Spur. Aus `…\.jpg\OpenWithProgids`
+verschwindet der eigene Wert, der Schlüssel selbst nur dann, wenn danach nichts
+mehr darin steht — dort steht regelmäßig noch der Eintrag einer anderen
+Anwendung, und ein Betrachter, der beim Abmelden die Zuordnungen der Fotos-App
+mitnimmt, hat mehr angerichtet als aufgeräumt.
+
+Was **nicht** entfernt wird, ist `UserChoice`: die Wahl des Benutzers steht in
+einem Zweig, den zu schreiben Windows der Anwendung ohnehin verwehrt. War die
+Bildanzeige der Standard für `.jpg` und wird abgemeldet, zeigt der Verweis ins
+Leere, und Windows fragt beim nächsten Doppelklick nach — dasselbe Verhalten
+wie bei jeder deinstallierten Anwendung.
+
+### Nachgemessen
+
+Auf Windows 11 (26200), gewöhnlich gestartet, mit
+`build\Release\Bildanzeige.exe`:
+
+| Handgriff | Befund |
+|---|---|
+| `/registrieren` | Rückgabewert 0; zehn ProgIds unter `HKCU\Software\Classes`, `SupportedTypes` und `FileAssociations` mit denselben zehn Endungen, `RegisteredApplications\Bildanzeige` → `Software\Bildanzeige\Capabilities` |
+| Fenstermenü | „Dateizuordnungen …" steht zwischen „Maximieren" und „Schließen", in eigener Gruppe |
+| Dialog, nichts eingetragen | zehn Haken gesetzt, `.ico` leer, Fußzeile „Bisher ist nichts eingetragen.", „Als Standard festlegen …" grau |
+| „Übernehmen" | Fußzeile „Eingetragen: 10 Endungen.", Knopf wird verfügbar, Registrierung wie bei `/registrieren` |
+| „Als Standard festlegen …" | Einstellungen öffnen sich auf **Apps › Standard-Apps › Bildanzeige** und führen genau die zehn Endungen auf, jede mit „Wählen Sie einen Standard aus." |
+| `/abmelden` | Rückgabewert 0; keine ProgId, kein `Software\Bildanzeige`, kein `Applications`-Zweig, kein Wert in `RegisteredApplications` |
+| fremde Einträge danach | `.jpg`, `.png`, `.tiff`, `.dib`, `.jpe`\`…\OpenWithProgids` stehen unverändert mit dem Eintrag der Fotos-App darin |
+| dasselbe erhöht gestartet | derselbe Baum unter `HKEY_LOCAL_MACHINE`; ein nicht erhöhter Lauf davor und danach lässt ihn unangetastet und schreibt allein nach `HKEY_CURRENT_USER` |
+
+Nachgestellt ist auch der ganze Weg bis zum Standard: nach der Registrierung
+ließ sich die Bildanzeige in den Einstellungen für `.bmp` und `.jpg` als
+Standard wählen, worauf unter `…\FileExts\.jpg\UserChoice` die ProgId
+`Bildanzeige.jpg` stand — geschrieben von Windows, nicht von der Anwendung.
+Nach dem Abmelden blieb dieser Verweis stehen und zeigte ins Leere; `.jpg`
+löste daraufhin `OpenWith.exe` aus, die Frage „Wie möchten Sie diese Datei
+öffnen?". Genau das ist gemeint, wenn oben steht, die Wahl gehöre dem Benutzer:
+sie überlebt das Abmelden der Anwendung, und ein erneutes Eintragen setzt sie
+ohne weiteres Zutun wieder in Kraft.
+
+## 11. Meilensteine
 
 | # | Ergebnis | Stand |
 |---|---|---|
@@ -1134,17 +1324,22 @@ Punkte, davon 600 × 300 für ein Bild im Verhältnis 2 : 1 über die volle Brei
 | M8 | Anwendungssymbol, Versionsressource, Release-Build | **fertig** |
 | M9 | Drucken: Dialog, Einpassen aufs Blatt, Seitenbereich | **fertig** |
 | M10 | Seitenansicht vor dem Drucken | **fertig** |
+| M11 | Dateiregistrierung: ProgIds, Capabilities, HKCU/HKLM | **fertig** |
 
 Nach M1–M2 ist der genannte Kernzweck erfüllt; M3–M4 liefern die Icon-Leiste
 aus der Anforderung; M5–M8 machen daraus einen Alltagsbetrachter. Mit M8 war
-v1.0.0 vollständig; M9 ergab v1.1.0, M10 ergibt v1.2.0.
+v1.0.0 vollständig; M9 ergab v1.1.0, M10 v1.2.0, M11 ergibt v1.3.0.
 
-## 11. Bewusst nicht in v1
+## 12. Bewusst nicht in v1
 
-Rotation in die Datei speichern, Löschen, Diashow, Registrierung als
-Standardanwendung für Bildformate. Alles Schreiboperationen auf Nutzerdateien
-oder auf der Registrierung — sinnvoll erst, wenn die Anzeige stabil steht.
+Rotation in die Datei speichern, Löschen, Diashow. Alles Schreiboperationen auf
+Nutzerdateien — sinnvoll erst, wenn die Anzeige stabil steht.
 
-Das Drucken stand hier ebenfalls, aus demselben Grund: es galt als
-Schreiboperation. Bei näherem Hinsehen ist es keine — die Datei bleibt
-unberührt, geschrieben wird auf Papier. Es ist mit M9 nachgereicht (Abschnitt 9).
+Zwei Punkte standen hier ebenfalls und sind nachgereicht. Das **Drucken** galt
+als Schreiboperation; bei näherem Hinsehen ist es keine — die Datei bleibt
+unberührt, geschrieben wird auf Papier (M9, Abschnitt 9). Die **Registrierung
+als Standardanwendung** ist eine, aber nicht auf Nutzerdateien: sie schreibt in
+den eigenen Zweig der Registrierung, nimmt sich vollständig zurück und rührt
+die Zuordnung, die der Benutzer getroffen hat, gar nicht erst an — die zu
+setzen erlaubt Windows seit Version 8 ohnehin keiner Anwendung mehr (M11,
+Abschnitt 10).
