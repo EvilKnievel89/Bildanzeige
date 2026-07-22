@@ -632,6 +632,11 @@ Das ist der Fall eines abgezogenen Sticks oder einer getrennten Netzfreigabe.
 
 ### Das Anwendungssymbol
 
+Das Symbol stammt aus dem Satz *Small & Flat* von paomedia und ist gemeinfrei
+(CC0 1.0) — siehe „Drittmaterial" in der [LICENSE](LICENSE). Selbst gezeichnet
+wäre es der einzige Teil des Projekts gewesen, bei dem Sorgfalt nicht
+weitergeholfen hätte.
+
 Die `icon.ico` bringt neun Größen mit: 16, 24, 32, 48, 64, 72, 96, 128 und 256.
 Eingebettet wird die ganze Datei, nicht ein einzelnes Bild — Windows sucht sich
 die passende Größe selbst heraus, und was es nicht findet, rechnet es hoch. Das

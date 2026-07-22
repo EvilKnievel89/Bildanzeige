@@ -3,7 +3,8 @@
 Schlanker Bildbetrachter für Windows im Geist der alten *Windows Bild- und
 Faxanzeige*. Win32 + WIC + Direct2D, keine externen Abhängigkeiten.
 
-Planung und Entwurf: [PLAN.md](PLAN.md)
+Planung und Entwurf: [PLAN.md](PLAN.md) · Lizenz: [MIT mit Commons
+Clause](LICENSE) — alles erlaubt außer Verkaufen
 
 ## Bauen
 
@@ -113,6 +114,19 @@ Fehlerbehandlung sowie Anwendungssymbol, Versionsangaben und Release-Build.
 
 Was bewusst nicht in v1 steckt — Rotation speichern, Löschen, Drucken,
 Diashow, Registrierung als Standardanwendung — steht in [PLAN.md](PLAN.md).
+
+## Lizenz
+
+[MIT-Lizenz mit der Bedingung „Commons Clause"](LICENSE): benutzen, verändern,
+weitergeben und einsetzen darf sie jeder, privat wie im Betrieb. Verkaufen
+nicht — weder die Software selbst noch ein Produkt oder einen Dienst, dessen
+Wert im Wesentlichen auf ihrer Funktion beruht. Damit ist sie „source
+available", nicht Open Source im Sinne der OSI, deren Definition den Verkauf
+ausdrücklich einschließt.
+
+Das Anwendungssymbol ist nicht von mir: es stammt aus dem Satz *Small & Flat*
+von paomedia und ist gemeinfrei (CC0 1.0). Näheres unter „Drittmaterial" in
+der [LICENSE](LICENSE).
 
 ## Testdaten
 
