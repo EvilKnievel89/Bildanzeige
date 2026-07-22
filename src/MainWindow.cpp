@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 
+#include "Printer.h"
 #include "Resource.h"
 
 #include <commctrl.h>
@@ -446,6 +447,11 @@ void MainWindow::OnKeyDown(WPARAM key)
             Execute(ToolbarCommand::RotateRight);
         break;
 
+    case 'P':
+        if (control)
+            Execute(ToolbarCommand::Print);
+        break;
+
     default:
         break;
     }
@@ -682,6 +688,10 @@ void MainWindow::Execute(ToolbarCommand command)
         AfterViewChange();
         break;
 
+    case ToolbarCommand::Print:
+        PrintCurrent();
+        break;
+
     case ToolbarCommand::Fullscreen:
         ToggleFullscreen();
         break;
@@ -689,6 +699,48 @@ void MainWindow::Execute(ToolbarCommand command)
     default:
         break;
     }
+}
+
+// Gedruckt wird, was zu sehen ist: die gezeigte Seite in der Drehung der
+// Anzeige. Zoom und Ausschnitt bleiben aussen vor -- sie sind die Lupe, mit der
+// man das Bild betrachtet, nicht das Bild.
+void MainWindow::PrintCurrent()
+{
+    if (!document_.IsOpen())
+        return;
+
+    // Vor dem Dialog anhalten. Er ist modal, aber der Zeitgeber schlaegt in
+    // seiner Nachrichtenschleife weiter -- die Seite waere unter dem Auftrag
+    // fortgewandert, und gedruckt kaeme etwas anderes heraus als das, was beim
+    // Druecken zu sehen war.
+    StopPlayback();
+
+    PrintJob job;
+    job.document = &document_;
+    job.currentPage = frameIndex_;
+    job.rotationQuarters = view_.View().Rotation();
+
+    ComPtr<IWICBitmapSource> composed;
+    if (animator_.IsActive())
+    {
+        std::wstring composeError;
+        composed = animator_.Compose(frameIndex_, composeError);
+        if (!composed)
+        {
+            MessageBoxW(hwnd_, composeError.c_str(), kAppTitle, MB_ICONWARNING | MB_OK);
+            return;
+        }
+        job.composed = composed.Get();
+    }
+
+    std::wstring error;
+    if (PrintImage(hwnd_, wic_.Get(), job, error) == PrintOutcome::Failed)
+        MessageBoxW(hwnd_, error.c_str(), kAppTitle, MB_ICONWARNING | MB_OK);
+
+    // Der Halt aus StopPlayback steht jetzt auch am Wiedergabeknopf.
+    ApplyButtonStates();
+    UpdateTitle();
+    InvalidateToolbar();
 }
 
 // Das Vollbild nimmt dem Fenster nur den Rahmen und legt es ueber den ganzen
@@ -843,6 +895,11 @@ void MainWindow::ApplyButtonStates()
 
     toolbar_.SetEnabled(ToolbarCommand::RotateLeft, hasImage);
     toolbar_.SetEnabled(ToolbarCommand::RotateRight, hasImage);
+
+    // Gedruckt wird aus der Datei, gebraucht wird also der offene Decoder --
+    // das gezeigte Bild dazu, damit der Knopf nicht bereitsteht, solange nach
+    // einem Fehlschlag gar nichts zu sehen ist.
+    toolbar_.SetEnabled(ToolbarCommand::Print, hasImage && document_.IsOpen());
 
     // Das Vollbild haengt am Fenster, nicht am Bild: es bleibt auch dann
     // erreichbar, wenn gerade nichts geladen ist.

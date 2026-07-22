@@ -35,6 +35,7 @@ private:
     void StepFile(int delta);
     void OnDropFiles(HDROP drop);
     void Execute(ToolbarCommand command);
+    void PrintCurrent();
 
     void StartPlayback();
     void StopPlayback();

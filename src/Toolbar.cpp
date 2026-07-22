@@ -79,6 +79,27 @@ namespace
     constexpr float kBackVertex = 2.5f;  // Spitze innen, aber mit Luft dazwischen
     constexpr float kBackTail = 7.5f;    // Schaftende aussen
 
+    // Drucker: ein Blatt oben hinein, ein flacher Kasten, ein Blatt unten
+    // heraus. Der erste Entwurf hatte statt des unteren Blattes einen
+    // Ausgabeschlitz quer im Kasten -- am Bildschirm nachgesehen las sich das
+    // wie ein Vorhaengeschloss: Buegel oben, Kasten, Balken darin. Der Kasten
+    // ist deshalb flacher geworden, das Blatt breiter, und der Schlitz zum
+    // heraustretenden Blatt.
+    //
+    // Der Kasten wird nicht als Rechteck gezogen, sondern zusammen mit dem
+    // unteren Blatt als ein einziger geschlossener Umriss: seine Unterkante
+    // bleibt dort offen, wo das Blatt hindurchtritt. Andernfalls laege das
+    // Blatt vor einer durchgehenden Linie und saehe angeklebt aus statt
+    // herauskommend -- und an den Stossstellen zweier Figuren blieben Kerben.
+    constexpr float kPaperLeft = 6.5f;
+    constexpr float kPaperRight = 17.5f;
+    constexpr float kPaperTop = 3.5f;
+    constexpr float kPaperOut = 20.5f;
+    constexpr float kBodyLeft = 3.5f;
+    constexpr float kBodyRight = 20.5f;
+    constexpr float kBodyTop = 9.5f;
+    constexpr float kBodyBottom = 16.5f;
+
     // Bogen von 315 Grad nach 225 Grad im Uhrzeigersinn -- die Luecke liegt
     // damit oben, die Pfeilspitze sitzt oben links und zeigt nach oben rechts.
     constexpr float kArcCx = 12.0f;
@@ -204,6 +225,47 @@ namespace
         *out = geometry.Detach();
         return S_OK;
     }
+
+    HRESULT CreatePrinter(ID2D1Factory* factory, ID2D1PathGeometry** out)
+    {
+        ComPtr<ID2D1PathGeometry> geometry;
+        HRESULT hr = factory->CreatePathGeometry(&geometry);
+        if (FAILED(hr))
+            return hr;
+
+        ComPtr<ID2D1GeometrySink> sink;
+        hr = geometry->Open(&sink);
+        if (FAILED(hr))
+            return hr;
+
+        // Kasten und heraustretendes Blatt in einem Zug: links hoch, ueber die
+        // Oberkante, rechts herunter, und die Unterkante nur bis zum Blatt,
+        // dann um dieses herum. Alle Ecken bekommen dadurch eine Gehrung.
+        sink->BeginFigure(D2D1::Point2F(kBodyLeft, kBodyBottom), D2D1_FIGURE_BEGIN_HOLLOW);
+        sink->AddLine(D2D1::Point2F(kBodyLeft, kBodyTop));
+        sink->AddLine(D2D1::Point2F(kBodyRight, kBodyTop));
+        sink->AddLine(D2D1::Point2F(kBodyRight, kBodyBottom));
+        sink->AddLine(D2D1::Point2F(kPaperRight, kBodyBottom));
+        sink->AddLine(D2D1::Point2F(kPaperRight, kPaperOut));
+        sink->AddLine(D2D1::Point2F(kPaperLeft, kPaperOut));
+        sink->AddLine(D2D1::Point2F(kPaperLeft, kBodyBottom));
+        sink->EndFigure(D2D1_FIGURE_END_CLOSED);
+
+        // Das Blatt, das hineingeht: drei Seiten, unten offen -- dort steckt es
+        // im Geraet, und die Oberkante des Kastens schliesst die Form ohnehin.
+        sink->BeginFigure(D2D1::Point2F(kPaperLeft, kBodyTop), D2D1_FIGURE_BEGIN_HOLLOW);
+        sink->AddLine(D2D1::Point2F(kPaperLeft, kPaperTop));
+        sink->AddLine(D2D1::Point2F(kPaperRight, kPaperTop));
+        sink->AddLine(D2D1::Point2F(kPaperRight, kBodyTop));
+        sink->EndFigure(D2D1_FIGURE_END_OPEN);
+
+        hr = sink->Close();
+        if (FAILED(hr))
+            return hr;
+
+        *out = geometry.Detach();
+        return S_OK;
+    }
 }
 
 Toolbar::Toolbar()
@@ -232,6 +294,12 @@ Toolbar::Toolbar()
         { ToolbarCommand::RotateLeft,   L"Nach links drehen (Strg+L)",  true,  true,  true,  false, {} },
         { ToolbarCommand::RotateRight,  L"Nach rechts drehen (Strg+R)", false, false, true,  false, {} },
 
+        // Drucken steht fuer sich. Es ist die einzige Funktion der Leiste, die
+        // den Bildschirm verlaesst und etwas anstoesst, das sich nicht mit dem
+        // naechsten Klick zuruecknehmen laesst -- ein Nachbar der Drehknoepfe
+        // waere er zu leicht im Vorbeigehen getroffen.
+        { ToolbarCommand::Print,        L"Drucken (Strg+P)",            true,  false, true,  false, {} },
+
         // "ein/aus" statt "Vollbild": der Knopf fuehrt in beide Richtungen, die
         // Kurzhilfe steht aber fest -- sie jedes Mal umzumelden waere Aufwand
         // fuer einen Wortlaut, den ohnehin nur einer von beiden Zustaenden liest.
@@ -250,7 +318,10 @@ HRESULT Toolbar::CreateResources(ID2D1Factory* factory)
     hr = CreateArcBody(factory, arcBody_.ReleaseAndGetAddressOf());
     if (FAILED(hr))
         return hr;
-    return CreateArcHead(factory, arcHead_.ReleaseAndGetAddressOf());
+    hr = CreateArcHead(factory, arcHead_.ReleaseAndGetAddressOf());
+    if (FAILED(hr))
+        return hr;
+    return CreatePrinter(factory, printer_.ReleaseAndGetAddressOf());
 }
 
 void Toolbar::DiscardDeviceResources()
@@ -457,6 +528,11 @@ void Toolbar::DrawIcon(ID2D1RenderTarget* target, const ToolbarButton& button, I
 
     case ToolbarCommand::ActualSize:
         DrawOneToOne(target, brush);
+        break;
+
+    case ToolbarCommand::Print:
+        if (printer_)
+            target->DrawGeometry(printer_.Get(), brush, kStrokeWidth);
         break;
 
     case ToolbarCommand::Fullscreen:

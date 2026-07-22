@@ -19,6 +19,7 @@ tools\pruefungen\pruefen.ps1 -Nur brechen,gifdaten
 | [gifdaten.cpp](gifdaten.cpp) | Was steht in einem GIF, und als welcher Typ? | Abschnitt 5 |
 | [ablegen.cpp](ablegen.cpp) | Hält die Pfadentnahme aus einem HDROP? | Abschnitt 6 |
 | [brechen.cpp](brechen.cpp) | Was nimmt WIC wirklich nicht mehr an? | Abschnitt 7 |
+| [drucken.cpp](drucken.cpp) | Was kommt beim Drucken heraus? | Abschnitt 9 |
 
 ## Was sie heute sagen
 
@@ -50,3 +51,19 @@ Fehler durch**. Das JPEG meldet „premature end of data segment" auf die
 Konsole und liefert die Pixel trotzdem. Wer im Hintergrund-Thread auf
 `WINCODEC_ERR_BADIMAGE` wartet, wartet lange — was den Fehlerweg wirklich
 auslöst, ist ein Pfad, der verschwindet.
+
+**drucken** — die einzige Prüfung, die Quellen der Anwendung mitübersetzt
+(`Printer.cpp`, `ImageDocument.cpp`, `Common.cpp`). Sie rechnet mit genau der
+Funktion, die auch druckt: einen Weg, den man ohne Drucker nicht nachrechnen
+kann, mit einer nachgebauten Fassung zu prüfen wäre wertlos. Drei Befunde. Der
+bedruckbare Bereich ist unsymmetrisch — beim Kyocera 99 Punkte oben und 103
+unten —, weshalb auf dem *Blatt* zentriert wird und nicht darin. Alle Seiten
+von `gross.png` und `mehrseitig.tif`, letztere um 90 Grad gedreht, kommen
+unverzerrt, eingepasst und mittig heraus. Und der Fall, den man im PDF nicht
+sieht: eine halb durchsichtige Vorlage ergibt **240 000 rote, 240 000 weiße und
+null schwarze Punkte** — ohne das Unterlegen mit Weiß käme dort Schwarz heraus.
+
+Sie legt PDFs an und braucht deshalb ein Arbeitsverzeichnis; `pruefen.ps1`
+arbeitet ohnehin in `%TEMP%`, es bleibt also nichts liegen. Mit
+`-drucker "<Name>"` geht der Auftrag an ein anderes Gerät als „Microsoft Print
+to PDF".

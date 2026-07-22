@@ -19,10 +19,11 @@ cmake --build --preset release
 ```
 
 Ergebnis: `build\Release\Bildanzeige.exe` — eine einzelne, portable EXE von
-437 KB. Sie braucht kein Redistributable: die CRT ist statisch eingebunden, und
+496 KB. Sie braucht kein Redistributable: die CRT ist statisch eingebunden, und
 importiert werden nur Systembibliotheken (`d2d1`, `ole32`, `shlwapi`,
-`shell32`, `user32`, `comctl32`, `kernel32`). Anwendungssymbol, Manifest und
-Versionsangaben stecken darin; kopieren genügt, installiert wird nichts.
+`shell32`, `user32`, `comctl32`, `comdlg32`, `gdi32`, `kernel32`).
+Anwendungssymbol, Manifest und Versionsangaben stecken darin; kopieren genügt,
+installiert wird nichts.
 
 Die Versionsnummer steht allein in der `project()`-Zeile der `CMakeLists.txt`.
 Ressourcendatei und Manifest bekommen sie beim Bauen zugereicht — wer sie
@@ -51,6 +52,7 @@ können auch auf das Fenster gezogen werden.
 | `Strg`+`0` | Originalgröße |
 | `Strg`+Pfeiltaste | Ausschnitt verschieben |
 | `Strg`+`L` / `Strg`+`R` | links / rechts drehen |
+| `Strg`+`P` | drucken |
 | `F11`, Doppelklick aufs Bild | Vollbild ein / aus |
 | `Esc` | Vollbild verlassen, sonst schließen |
 
@@ -87,6 +89,13 @@ Herauszoomen endet beim Einpassen — kleiner als nötig wird nicht gezeigt, und
 kleine Bilder werden nicht aufgeblasen. Oberhalb von 100 % wird nicht geglättet,
 damit bei einem Scan die vorhandenen Pixel sichtbar bleiben.
 
+Gedruckt wird die gezeigte Seite, in der Drehung der Anzeige, eingepasst aufs
+Blatt und darauf zentriert. Zoom und Ausschnitt bleiben außen vor — sie sind
+die Lupe, mit der man das Bild betrachtet, nicht das Bild. Bei einer
+mehrseitigen Datei bietet der Druckdialog Alle, Aktuelle Seite und einen
+Bereich an; vorgewählt ist die gezeigte Seite. Eine Animation zählt als eine
+Seite. Während des Druckens steht das Fenster.
+
 Im Vollbild bleibt die Icon-Leiste stehen. Ohne Rahmen und Menü ist sie der
 einzige sichtbare Rückweg, und vierzig Punkte am unteren Rand kosten auf einem
 großen Schirm knapp drei Prozent der Fläche.
@@ -105,15 +114,16 @@ bedeutet also weiterhin, was in der Datei steht.
 
 ## Stand
 
-**Version 1.0.0**, alle acht Meilensteine abgeschlossen — Fenster,
+**Version 1.1.0**, alle neun Meilensteine abgeschlossen — Fenster,
 Direct2D-Darstellung, Datei per Kommandozeile, Multi-Frame-Dekodierung,
 Seitenwechsel, Icon-Leiste, Rotation, Zoom, Verschieben, Einpassen und
 Originalgröße, GIF-Animation, Ordnernavigation, Drag & Drop,
 EXIF-Orientierung, Hintergrund-Dekodierung, Vollbild, DPI-Wechsel,
-Fehlerbehandlung sowie Anwendungssymbol, Versionsangaben und Release-Build.
+Fehlerbehandlung, Anwendungssymbol, Versionsangaben, Release-Build sowie
+Drucken.
 
-Was bewusst nicht in v1 steckt — Rotation speichern, Löschen, Drucken,
-Diashow, Registrierung als Standardanwendung — steht in [PLAN.md](PLAN.md).
+Was bewusst nicht darin steckt — Rotation speichern, Löschen, Diashow,
+Registrierung als Standardanwendung — steht in [PLAN.md](PLAN.md).
 
 ## Lizenz
 

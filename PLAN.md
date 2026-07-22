@@ -48,7 +48,7 @@ Auf dieser Maschine bereits geprüft (Testkompilat gebaut und ausgeführt):
 │                                              │
 │                                              │
 ├──────────────────────────────────────────────┤
-│   ‹  ›  │  ⏮ ⏸ ⏭  │  ⊖ ⊕ [ ] 1:1 │ ↺ ↻ │ ⛶  │   ← Icon-Leiste
+│  ‹ › │ ⏮ ⏸ ⏭ │ ⊖ ⊕ [ ] 1:1 │ ↺ ↻ │ 🖶 │ ⛶  │   ← Icon-Leiste
 └──────────────────────────────────────────────┘
 ```
 
@@ -74,7 +74,11 @@ Gruppen von links nach rechts:
    dass man ihn getroffen hat — der nächste Klick träfe dann den falschen Knopf.
 3. **Zoom** — verkleinern, vergrößern, Einpassen, Originalgröße (1:1)
 4. **Drehen** — links, rechts
-5. **Vollbild** — die Leiste bleibt darin stehen. Sie erst einzublenden, sobald
+5. **Drucken** — steht für sich, mit Trennlinien zu beiden Seiten. Es ist die
+   einzige Funktion der Leiste, die den Bildschirm verlässt und etwas anstößt,
+   das sich nicht mit dem nächsten Klick zurücknehmen lässt; als Nachbar der
+   Drehknöpfe wäre es zu leicht im Vorbeigehen getroffen. Siehe Abschnitt 9.
+6. **Vollbild** — die Leiste bleibt darin stehen. Sie erst einzublenden, sobald
    sich die Maus regt, hieße einen zweiten Satz Regeln für Sichtbarkeit,
    Zeitgeber und Trefferprüfung zu führen; und ohne Rahmen und Menü ist sie
    der einzige sichtbare Rückweg. Vierzig Punkte am unteren Rand kosten auf
@@ -91,6 +95,16 @@ Drei der Gruppen zeigen nach rechts, und sie müssen sich auf einen Blick
 unterscheiden. Sie tun es über die Machart, nicht über die Größe: der
 **Bildwechsel** ist ein bloßer Winkel aus Strichen, der **Seitenschritt** ein
 gefülltes Dreieck mit Balken, die **Wiedergabe** ein gefülltes Dreieck ohne.
+
+Der **Drucker** ist der einzige geschlossene Umriss der Leiste — ein Blatt oben
+hinein, ein flacher Kasten, ein Blatt unten heraus. Der erste Entwurf hatte
+statt des unteren Blattes einen Ausgabeschlitz quer im Kasten; am Bildschirm
+nachgesehen las sich das wie ein Vorhängeschloss (Bügel oben, Kasten, Balken
+darin). Der Kasten ist daraufhin flacher geworden, das Blatt breiter und der
+Schlitz zum heraustretenden Blatt. Kasten und dieses Blatt sind ein einziger
+Umriss, dessen Unterkante dort offen bleibt, wo das Blatt hindurchtritt —
+sonst läge es vor einer durchgehenden Linie und sähe angeklebt aus statt
+herauskommend.
 
 Zwei Icons bestehen aus Eckwinkeln und drohten sich ebenso zu ähneln: das
 **Einpassen** setzt vier Ecken um eine leere Mitte, das **Vollbild** zwei Ecken
@@ -117,6 +131,7 @@ Klick-Zustände über Hit-Testing gegen Rechtecke; Tooltips über ein
 | `Strg`+`B` | Einpassen (beste Anpassung) |
 | `Strg`+`0` | Originalgröße |
 | `Strg`+Pfeiltaste | Ausschnitt verschieben |
+| `Strg`+`P` | Drucken |
 | `F11`, Doppelklick | Vollbild |
 | `Esc` | Vollbild verlassen, sonst schließen |
 
@@ -148,6 +163,7 @@ src/
   RenderView.*         Direct2D-Rendertarget, Transformationen, Zeichnen
   Toolbar.*            Icon-Leiste: Geometrien, Layout, Hit-Testing
   DecodeWorker.*       Dekodierung im Hintergrund-Thread
+  Printer.*            Druckdialog, Einpassen aufs Blatt, Ausgabe über GDI
 res/
   Bildanzeige.rc       bindet Manifest, Symbol und Versionsblock ein
   Resource.h           Kennungen der Ressourcen
@@ -176,7 +192,14 @@ tools/
     gifdaten.cpp       was steht in einem GIF, welcher Typ? Abschnitt 5
     ablegen.cpp        haelt die Pfadentnahme aus HDROP?    Abschnitt 6
     brechen.cpp        was nimmt WIC nicht mehr an?         Abschnitt 7
+    drucken.cpp        was kommt beim Drucken heraus?       Abschnitt 9
 ```
+
+`drucken.cpp` ist die einzige Prüfung, die Quellen der Anwendung mitübersetzt
+(`Printer.cpp`, `ImageDocument.cpp`, `Common.cpp`). Sie soll mit genau der
+Funktion rechnen, die auch druckt, nicht mit einer nachgebauten — bei einem
+Weg, den man nicht ohne Drucker nachrechnen kann, wäre eine zweite Fassung der
+Rechnung wertlos.
 
 Die Programme unter `pruefungen/` gehören nicht zur Anwendung. Sie sind der
 Beleg für die Zahlen in diesem Dokument: jede beantwortet eine Frage, und wer
@@ -774,7 +797,139 @@ stattfindet, ist nichts zu holen — der Schalter ist wieder heraus.
 `/guard:cf` kostet 2 560 Byte und bleibt: das ist der Preis dafür, dass
 indirekte Sprünge geprüft werden.
 
-## 9. Meilensteine
+## 9. Drucken
+
+### Was gedruckt wird
+
+Die gezeigte Seite, in der Drehung der Anzeige. Zoom und Ausschnitt bleiben
+außen vor: sie sind die Lupe, mit der man das Bild betrachtet, nicht das Bild.
+Die Drehung dagegen wird mitgenommen — wer ein quer liegendes Foto aufrichtet,
+damit es lesbar ist, will es nicht wieder quer aus dem Drucker bekommen.
+
+Geholt wird die Seite **aus der Datei**, nicht aus der Anzeige. Zwei Gründe:
+für die Texturgrenze der Grafikkarte kann das gezeigte Bild verkleinert worden
+sein (Abschnitt 7), und eine `ID2D1Bitmap` in einem `ID2D1HwndRenderTarget`
+lässt sich ohnehin nicht zurücklesen. Aufs Papier gehört die volle Auflösung.
+
+Ein animiertes GIF ist **eine** Seite: seine Einzelbilder sind derselbe Vorgang
+in der Zeit, keine Blätter. Gedruckt wird die komponierte Leinwand des gezeigten
+Einzelbildes — die Rohframes sind Teilrechtecke und ergäben einzeln Fetzen
+(Abschnitt 5). Die Wiedergabe wird vor dem Dialog angehalten: er ist modal, aber
+der Zeitgeber schlägt in seiner Nachrichtenschleife weiter, und die Seite wäre
+unter dem Auftrag fortgewandert.
+
+### GDI, nicht Direct2D
+
+Direct2D kann drucken, über `ID2D1PrintControl`. Der Weg dorthin verlangt aber
+ein Gerät der Fassung 1.1 samt `ID2D1DeviceContext` und einem
+`IPrintDocumentPackageTarget`; die Anzeige läuft auf 1.0 mit
+`ID2D1HwndRenderTarget`. Die ganze Darstellung umzubauen, um ein Bild auf ein
+Blatt zu legen, steht in keinem Verhältnis. Der Weg ist deshalb der alte:
+
+```
+ImageDocument::LoadFrame   32bppPBGRA -- derselbe Aufruf wie für den Bildschirm
+  -> IWICBitmapFlipRotator Drehung der Anzeige
+  -> IWICBitmapScaler      nur verkleinernd, siehe unten
+  -> ein Puffer            32bppPBGRA über Weiß nach 24bppBGR, an Ort und Stelle
+  -> StretchDIBits         auf das Zielrechteck
+```
+
+### Eingepasst und auf dem Blatt zentriert
+
+Das Bild wird unter Wahrung des Seitenverhältnisses in den bedruckbaren Bereich
+eingepasst — kleine Bilder also auch vergrößert. Auf Papier gibt es kein
+sinnvolles „100 %": der Maßstab des Bildschirms entspricht dort nichts.
+
+Zentriert wird dann aber auf dem **Blatt**, nicht im bedruckbaren Bereich. Der
+ist bei den meisten Geräten unsymmetrisch — nachgemessen mit `drucken.exe`:
+
+| Drucker | Blatt | bedruckbar | Rand links/oben | rechts/unten |
+|---|---|---|---|---|
+| KX DRIVER for Universal Printing | 4961 × 7016 | 4760 × 6814 | 99 / 99 | 102 / 103 |
+| OneNote (Desktop) | 4961 × 7016 | 4676 × 6814 | 142 / 100 | 143 / 102 |
+| Microsoft Print to PDF | 4961 × 7016 | 4961 × 7016 | 0 / 0 | 0 / 0 |
+
+Alle bei 600 dpi, A4. Der Unterschied ist hier klein — drei bis vier
+Gerätepunkte, also etwa ein Zehntelmillimeter — aber er ist umsonst zu haben:
+`(Blattmitte − PHYSICALOFFSET)` statt `(bedruckbarer Bereich)/2`, eine Zeile.
+Bei Geräten mit großem Einzugsrand unten macht dieselbe Zeile Millimeter aus.
+Anschließend wird ins Bedruckbare zurückgeschnitten, denn zentriert auf dem
+Blatt kann heißen: zum Teil im Rand, den das Gerät nicht erreicht.
+
+### Zwei Grenzen für den Zwischenpuffer
+
+Gerechnet wird höchstens so fein, wie das Blatt es aufnimmt, und höchstens so
+fein, wie die Quelle es hergibt. Ein kleines Bild wird also nicht hier
+vergrößert, sondern von `StretchDIBits` im Treiber — das spart den Speicher für
+eine Vergrößerung, die nichts hinzufügt. Zwei Obergrenzen kommen dazu:
+
+- **600 dpi.** Darüber ist am Blatt kein Unterschied mehr zu sehen. Treiber, die
+  1200 oder 2400 dpi melden, sind häufig; ohne diese Grenze legte ein A4-Auftrag
+  dort ein halbes Gigabyte an, für nichts.
+- **36 Millionen Punkte.** Für großes Papier: A0 bei 600 dpi wären 550
+  Megapixel. A4 bei 600 dpi sind 32 Millionen — der Fall, um den es geht, passt
+  mit Luft darunter.
+
+Der Puffer wird ein einziges Mal angelegt und dient zweimal: erst kommen die
+32bppPBGRA-Punkte hinein, dann werden sie **an Ort und Stelle** zu 24bppBGR
+zusammengeschoben. Die Zielzeile ist nie länger als die Quellzeile, und im
+Zeileninneren läuft das Ziel um ein Byte je Punkt hinter der Quelle her — es
+wird also nichts überschrieben, was noch zu lesen wäre. Zeilenweise zu holen
+wäre die naheliegende Alternative gewesen und ist gerade falsch: bei einem JPEG
+hieße jeder Streifen, die Datei erneut zu dekodieren.
+
+### Weißer Grund
+
+Papier ist weiß. Ohne Unterlegen käme jede durchsichtige Stelle als **Schwarz**
+heraus, denn in vormultiplizierten Werten steht dort eine Null. Über Weiß ist
+die Rechnung denkbar einfach: `Wert + (255 − Alpha)`; da der Wert nie größer ist
+als das Alpha, kann dabei nichts überlaufen.
+
+### Der Dialog
+
+`PrintDlgEx` mit `PD_RETURNDC`. Die Seitenwahl richtet sich nach der Datei:
+
+| Datei | Dialog |
+|---|---|
+| Einzelbild, animiertes GIF | `PD_NOPAGENUMS \| PD_NOCURRENTPAGE` — es gibt nur eine Seite |
+| Mehrseitig (TIFF) | Alle / Aktuelle Seite / Bereich, **vorgewählt: aktuelle Seite** |
+
+Wer bei Seite 3 eines Faxes auf Drucken tippt, meint diese Seite; „Alle" ist
+einen Klick entfernt, ein versehentlich ausgeworfener Stapel dagegen nicht mehr
+einzusammeln. Kopien und Sortierung übernimmt mit
+`PD_USEDEVMODECOPIESANDCOLLATE` der Treiber — er kann das ungleich schneller,
+denn dieselbe Seite mehrfach zu drucken hieße sonst, sie mehrfach zu dekodieren.
+Löscht er das Flag, kann er es nicht; dann wird die ganze Folge wiederholt.
+
+### Im UI-Thread, mit Bedacht
+
+Gedruckt wird ohne Hintergrund-Thread, und solange steht das Fenster. Das
+widerspricht Abschnitt 7 nur scheinbar: dort ging es ums Blättern, wo ein
+Stillstand je Tastendruck unerträglich wäre. Hier ist der Dialog davor ohnehin
+modal, die Arbeit danach ist durch die Auflösung des Geräts nach oben begrenzt,
+und ein Auftrag, der einen Dateiwechsel überdauern könnte, bräuchte eine zweite
+Buchführung über Zustände, die sich unterdessen ändern. Der Zeiger wird zur
+Sanduhr; schlägt etwas fehl, räumt `AbortDoc` den halben Auftrag weg, statt
+Papier mit halben Seiten auszuwerfen.
+
+### Nachgemessen
+
+`tools\pruefungen\pruefen.ps1 -Nur drucken` schickt echte Aufträge durch
+`PrintPageToDC`, dieselbe Funktion, die auch die Anwendung aufruft, und prüft
+je Seite vier Dinge: Seitenverhältnis erhalten, eine Kante
+stößt an den Rand (also wirklich eingepasst), vollständig im bedruckbaren
+Bereich, Mitte des Bildes auf der Mitte des Blattes. Alle Seiten von
+`gross.png` und `mehrseitig.tif`, letztere um 90 Grad gedreht, bestehen.
+
+Der weiße Grund ist der Fall, den man nicht sieht, wenn man nur ins PDF schaut.
+Geprüft wird er über eine Metadatei mit dem Drucker als Bezugsgerät:
+`PrintPageToDC` rechnet also mit den echten Maßen des Geräts, und die
+Aufzeichnung wird hinterher in eine Bitmap
+zurückgespielt, deren Grund magenta ist. Eine halb durchsichtige Vorlage
+ergab **240 000 rote, 240 000 weiße und null schwarze Punkte** — beide Hälften
+gleich groß, das Durchsichtige also weiß unterlegt und nicht schwarz.
+
+## 10. Meilensteine
 
 | # | Ergebnis | Stand |
 |---|---|---|
@@ -786,13 +941,18 @@ indirekte Sprünge geprüft werden.
 | M6 | Ordnernavigation, Drag&Drop, EXIF-Orientierung | **fertig** |
 | M7 | Hintergrund-Dekodierung, DPI, Vollbild, Fehlerbehandlung | **fertig** |
 | M8 | Anwendungssymbol, Versionsressource, Release-Build | **fertig** |
+| M9 | Drucken: Dialog, Einpassen aufs Blatt, Seitenbereich | **fertig** |
 
 Nach M1–M2 ist der genannte Kernzweck erfüllt; M3–M4 liefern die Icon-Leiste
-aus der Anforderung; M5–M8 machen daraus einen Alltagsbetrachter. Mit M8 ist
-v1.0.0 vollständig.
+aus der Anforderung; M5–M8 machen daraus einen Alltagsbetrachter. Mit M8 war
+v1.0.0 vollständig; M9 kam danach hinzu und ergibt v1.1.0.
 
-## 10. Bewusst nicht in v1
+## 11. Bewusst nicht in v1
 
-Rotation in die Datei speichern, Löschen, Drucken, Diashow, Registrierung als
-Standardanwendung für Bildformate. Alles Schreiboperationen auf Nutzerdateien —
-sinnvoll erst, wenn die Anzeige stabil steht.
+Rotation in die Datei speichern, Löschen, Diashow, Registrierung als
+Standardanwendung für Bildformate. Alles Schreiboperationen auf Nutzerdateien
+oder auf der Registrierung — sinnvoll erst, wenn die Anzeige stabil steht.
+
+Das Drucken stand hier ebenfalls, aus demselben Grund: es galt als
+Schreiboperation. Bei näherem Hinsehen ist es keine — die Datei bleibt
+unberührt, geschrieben wird auf Papier. Es ist mit M9 nachgereicht (Abschnitt 9).

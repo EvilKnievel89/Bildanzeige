@@ -19,7 +19,9 @@ $ErrorActionPreference = "Stop"
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
 
 $hier = $PSScriptRoot
-$testdata = Join-Path (Split-Path (Split-Path $hier -Parent) -Parent) "testdata"
+$wurzel = Split-Path (Split-Path $hier -Parent) -Parent
+$testdata = Join-Path $wurzel "testdata"
+$src = Join-Path $wurzel "src"
 
 # Reihenfolge mit Absicht: erst ob ueberhaupt etwas da ist, dann was es kann,
 # dann die einzelnen Befunde.
@@ -32,7 +34,15 @@ $pruefungen = @(
        Args = @("$testdata\anim.gif") },
     @{ Name = "ablegen";      Frage = "Haelt die Pfadentnahme aus einem HDROP?";  Args = @() },
     @{ Name = "brechen";      Frage = "Was nimmt WIC wirklich nicht mehr an?";
-       Args = @("$testdata\gross.png", "$testdata\dreh1.jpg") }
+       Args = @("$testdata\gross.png", "$testdata\dreh1.jpg") },
+
+    # Die einzige Pruefung, die Quellen der Anwendung mituebersetzt: gerechnet
+    # werden soll mit genau der Funktion, die auch druckt, nicht mit einer
+    # nachgebauten. Sie legt PDFs an und braucht deshalb ein Arbeitsverzeichnis.
+    @{ Name = "drucken";      Frage = "Was kommt beim Drucken heraus?";
+       Args = @("$testdata\gross.png", "$testdata\mehrseitig.tif")
+       Quellen = @("Printer.cpp", "ImageDocument.cpp", "Common.cpp")
+       Libs = @("comdlg32.lib", "winspool.lib", "gdi32.lib", "user32.lib", "shlwapi.lib") }
 )
 
 if ($Nur) { $pruefungen = $pruefungen | Where-Object { $Nur -contains $_.Name } }
@@ -58,9 +68,12 @@ try {
     # Arbeitsbaum.
     Set-Location $bau
     foreach ($p in $pruefungen) {
-        $quelle = Join-Path $hier "$($p.Name).cpp"
-        $log = & cl.exe /nologo /EHsc /std:c++20 /W3 /utf-8 $quelle `
-                        /Fe:"$bau\$($p.Name).exe" ole32.lib windowscodecs.lib d2d1.lib shell32.lib 2>&1
+        $quellen = @(Join-Path $hier "$($p.Name).cpp")
+        foreach ($q in $p.Quellen) { $quellen += (Join-Path $src $q) }
+        $libs = @("ole32.lib", "windowscodecs.lib", "d2d1.lib", "shell32.lib") + $p.Libs
+        $log = & cl.exe /nologo /EHsc /std:c++20 /W3 /utf-8 /I"$src" `
+                        /DUNICODE /D_UNICODE /DNOMINMAX /DWIN32_LEAN_AND_MEAN /D_WIN32_WINNT=0x0A00 `
+                        $quellen /Fe:"$bau\$($p.Name).exe" /link $libs 2>&1
         Write-Output ""
         Write-Output ("=" * 72)
         Write-Output ("  {0}  --  {1}" -f $p.Name, $p.Frage)

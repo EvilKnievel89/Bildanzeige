@@ -20,6 +20,7 @@ enum class ToolbarCommand
     ActualSize,
     RotateLeft,
     RotateRight,
+    Print,
     Fullscreen,
 };
 
@@ -91,5 +92,6 @@ private:
     ComPtr<ID2D1PathGeometry> chevron_;    // desgleichen, aber nur als Strich
     ComPtr<ID2D1PathGeometry> arcBody_;    // Rotationsbogen im Uhrzeigersinn
     ComPtr<ID2D1PathGeometry> arcHead_;    // zugehoerige Pfeilspitze
+    ComPtr<ID2D1PathGeometry> printer_;    // Kasten mit Blatt hinein und heraus
     ComPtr<ID2D1SolidColorBrush> brush_;
 };

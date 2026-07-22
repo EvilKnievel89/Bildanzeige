@@ -4,7 +4,8 @@ Zweierlei liegt hier: die **Erzeuger der Testdaten** und die
 **[Prüfprogramme](pruefungen/)**. Jene legen an, womit geprüft wird; diese
 beantworten die Fragen, auf denen [PLAN.md](../PLAN.md) steht — welche Decoder
 es gibt, in welchem Format ein Fax hereinkommt, was WIC an einer beschädigten
-Datei noch durchgehen lässt. Beide sind mit einem Aufruf zu haben:
+Datei noch durchgehen lässt, was beim Drucken wirklich aufs Blatt kommt. Beide
+sind mit einem Aufruf zu haben:
 
 ```bat
 tools\mktestdaten.ps1              Testdaten neu erzeugen
