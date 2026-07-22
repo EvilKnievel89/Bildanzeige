@@ -48,9 +48,31 @@ struct PrintPlacement
     int height = 0;
 };
 
-// Eine Seite in einen Geraetekontext zeichnen -- zwischen StartPage und
-// EndPage. Steht hier und nicht im Verborgenen, damit der Weg aufs Papier
-// ohne Dialog nachzumessen ist; tools/pruefungen/drucken.cpp tut genau das.
+// Beim Drucken gilt diese Feinheit als Obergrenze fuer das Zwischenbild.
+// Darueber ist am Blatt kein Unterschied mehr zu sehen, der Speicher waechst
+// aber weiter -- Naeheres in PLAN.md, Abschnitt 9.
+constexpr int kPrintDpi = 600;
+
+// Eine Seite in einen Geraetekontext zeichnen -- beim Drucken zwischen
+// StartPage und EndPage. Steht hier und nicht im Verborgenen, weil zwei andere
+// denselben Weg brauchen: die Seitenansicht zeichnet damit in eine Metadatei,
+// und tools/pruefungen/drucken.cpp misst damit nach, was aufs Blatt kommt.
+//
+// maxDpi begrenzt die Feinheit des Zwischenbildes. Die Seitenansicht setzt hier
+// die Feinheit des Bildschirms ein: in Druckauflaesung zu rechnen kostete
+// Sekunden und zeigte am Schirm keinen Punkt mehr.
+//
 // placement nimmt auf Wunsch das errechnete Rechteck auf und darf nullptr sein.
 bool PrintPageToDC(HDC dc, IWICImagingFactory* wic, IWICBitmapSource* source,
-                   int rotationQuarters, PrintPlacement* placement, std::wstring& error);
+                   int rotationQuarters, int maxDpi, PrintPlacement* placement,
+                   std::wstring& error);
+
+// Rahmen fuer eine Metadatei, die eine mit PrintPageToDC gezeichnete Seite
+// aufnehmen soll: der bedruckbare Bereich des Geraets, in Hundertstelmillimetern.
+//
+// Das ist keine Feinheit, sondern der Unterschied zwischen richtig und falsch.
+// CreateEnhMetaFile setzt den Rahmen ohne diese Angabe auf das kleinste
+// Rechteck um das Gezeichnete -- beim Abspielen fuellte das Bild dann die ganze
+// Zielflaeche, gleichgueltig, wo auf dem Blatt es hingehoert. Die Einpassung
+// waere unsichtbar und die Ansicht eine Luege.
+RECT PrintMetafileFrame(HDC printerDC);

@@ -77,7 +77,8 @@ Gruppen von links nach rechts:
 5. **Drucken** — steht für sich, mit Trennlinien zu beiden Seiten. Es ist die
    einzige Funktion der Leiste, die den Bildschirm verlässt und etwas anstößt,
    das sich nicht mit dem nächsten Klick zurücknehmen lässt; als Nachbar der
-   Drehknöpfe wäre es zu leicht im Vorbeigehen getroffen. Siehe Abschnitt 9.
+   Drehknöpfe wäre es zu leicht im Vorbeigehen getroffen. Der Knopf öffnet
+   zuerst die Seitenansicht, nicht den Druckdialog — Abschnitt 9.
 6. **Vollbild** — die Leiste bleibt darin stehen. Sie erst einzublenden, sobald
    sich die Maus regt, hieße einen zweiten Satz Regeln für Sichtbarkeit,
    Zeitgeber und Trefferprüfung zu führen; und ohne Rahmen und Menü ist sie
@@ -131,7 +132,7 @@ Klick-Zustände über Hit-Testing gegen Rechtecke; Tooltips über ein
 | `Strg`+`B` | Einpassen (beste Anpassung) |
 | `Strg`+`0` | Originalgröße |
 | `Strg`+Pfeiltaste | Ausschnitt verschieben |
-| `Strg`+`P` | Drucken |
+| `Strg`+`P` | Seitenansicht (von dort drucken) |
 | `F11`, Doppelklick | Vollbild |
 | `Esc` | Vollbild verlassen, sonst schließen |
 
@@ -164,6 +165,7 @@ src/
   Toolbar.*            Icon-Leiste: Geometrien, Layout, Hit-Testing
   DecodeWorker.*       Dekodierung im Hintergrund-Thread
   Printer.*            Druckdialog, Einpassen aufs Blatt, Ausgabe über GDI
+  PrintPreview.*       Seitenansicht: Metadatei aufs Blatt, Seitenschritte
 res/
   Bildanzeige.rc       bindet Manifest, Symbol und Versionsblock ein
   Resource.h           Kennungen der Ressourcen
@@ -896,7 +898,20 @@ als das Alpha, kann dabei nichts überlaufen.
 
 Wer bei Seite 3 eines Faxes auf Drucken tippt, meint diese Seite; „Alle" ist
 einen Klick entfernt, ein versehentlich ausgeworfener Stapel dagegen nicht mehr
-einzusammeln. Kopien und Sortierung übernimmt mit
+einzusammeln.
+
+**Unter Windows 11 kommt davon nur die Hälfte an.** Seit 22H2 fängt das System
+den Aufruf ab und zeigt statt der Eigenschaftsseiten seinen eigenen, in UWP
+geschriebenen Einheitsdialog — Fensterklasse `ApplicationFrameWindow`, Titel
+„Drucken aus einer Win32-Anwendung". Dessen Auswahlliste „Seiten" enthält, per
+UI-Automation ausgelesen, genau zwei Einträge: **Alle Seiten** und
+**Benutzerdefinierter Bereich**. Für „Aktuelle Seite" gibt es dort kein
+Gegenstück, `PD_CURRENTPAGE` fällt also wirkungslos aus. Die Vorwahl bleibt im
+Code, weil sie unter dem alten Dialog greift und weil sie nichts kostet; wer
+sie unter Windows 11 braucht, blättert in der Seitenansicht zur gewünschten
+Seite — von dort geht sie als aktuelle Seite in den Auftrag.
+
+Kopien und Sortierung übernimmt mit
 `PD_USEDEVMODECOPIESANDCOLLATE` der Treiber — er kann das ungleich schneller,
 denn dieselbe Seite mehrfach zu drucken hieße sonst, sie mehrfach zu dekodieren.
 Löscht er das Flag, kann er es nicht; dann wird die ganze Folge wiederholt.
@@ -912,6 +927,56 @@ Buchführung über Zustände, die sich unterdessen ändern. Der Zeiger wird zur
 Sanduhr; schlägt etwas fehl, räumt `AbortDoc` den halben Auftrag weg, statt
 Papier mit halben Seiten auszuwerfen.
 
+### Die Seitenansicht
+
+`Strg`+`P` und der Druckknopf führen nicht geradewegs in den Druckdialog,
+sondern zuerst in eine eigene Seitenansicht. Der Anlass ist der Einheitsdialog
+von oben: sein Vorschaufeld bleibt bei **jeder** Win32-Anwendung leer und sagt
+„Diese App unterstützt keine Seitenansicht" — Notepad, Notepad++ und MuseScore
+ebenso. Das ist kein fehlendes Häkchen, sondern die Bauart: die Vorschau soll
+gefüllt sein, *bevor* gedruckt wird, eine GDI-Anwendung erzeugt ihre Seiten aber
+erst *danach*, zwischen `StartDoc` und `EndDoc`. Füllen kann das Feld nur, wer
+Windows eine rückrufbare Seitenquelle übergibt (`IPrintDocumentSource`) — das
+Modell der UWP-Anwendungen, für das der ganze Ausgabeweg auf XPS und Direct2D
+1.1 umzustellen wäre. Der Preis stünde in keinem Verhältnis zum Gewinn.
+
+Die eigene Ansicht ist dagegen fast geschenkt, weil `PrintPageToDC` in *jeden*
+Gerätekontext zeichnet. Sie zeichnet in eine **Metadatei mit dem Drucker als
+Bezugsgerät** und spielt diese ins Fenster: gerechnet wird also mit den
+wirklichen Maßen des Geräts, und die Ansicht kann gar nicht von der Ausgabe
+abweichen — sie ist die Ausgabe, nur kleiner.
+
+Gezeigt wird das ganze Blatt, nicht bloß der bedruckbare Bereich: die
+Aufzeichnung wird auf dessen Platz *innerhalb* des weißen Blattes gespielt, der
+unbedruckbare Rand bleibt weiß stehen. Gerechnet wird mit dem Standarddrucker —
+zu diesem Zeitpunkt hat noch niemand einen gewählt — und sein Name steht im
+Fenstertitel, damit nicht im Verborgenen bleibt, worauf sich die Ansicht
+bezieht. Wer im Druckdialog danach ein anderes Gerät nimmt, bekommt dessen Blatt.
+
+Gezeichnet wird mit **150 dpi**, nicht mit den 600 des Druckers: bei A4 sind das
+rund 1240 × 1754 Punkte und damit mehr, als jedes Fenster zeigen kann, während
+die Druckauflösung bei einem großen Scan Sekunden kostete. Feste Zahl statt
+einer aus der Fenstergröße errechneten — sonst müsste bei jedem Ziehen am
+Rahmen neu dekodiert werden.
+
+#### Der Rahmen der Metadatei
+
+`CreateEnhMetaFile` ohne `lpRect` setzt den Rahmen auf **das kleinste Rechteck
+um das Gezeichnete**. Beim Abspielen füllte das Bild dann die ganze Zielfläche,
+gleichgültig, wo auf dem Blatt es hingehört: eine querformatige Seite erschien
+über das ganze Hochformat gezerrt, die Einpassung war unsichtbar und die
+Ansicht eine Lüge. `PrintMetafileFrame` liefert deshalb den bedruckbaren
+Bereich in Hundertstelmillimetern, gerechnet aus `HORZRES` und `LOGPIXELSX`
+statt aus `HORZSIZE` — die ersten beiden beziehen sich sicher auf den
+bedruckbaren Bereich, während `HORZSIZE` je nach Treiber auch das Blatt meint.
+
+Bemerkenswert am Fehler ist, wie er sich versteckt hat: `drucken.exe` meldete
+mit ihm **240 000 rote, 240 000 weiße und 0 unbemalte Punkte** und alle Haken
+grün. Die Prüfung auf Weiß statt Schwarz war ja auch in Ordnung — nur war
+nebenbei das Bild über die ganze Fläche gezerrt, und dass „unbemalt" bei einer
+200 × 100 großen Vorlage auf A4 null sein soll, hätte auffallen müssen. Die
+Prüfung besteht seither auf einem unbemalten Rest.
+
 ### Nachgemessen
 
 `tools\pruefungen\pruefen.ps1 -Nur drucken` schickt echte Aufträge durch
@@ -922,12 +987,22 @@ Bereich, Mitte des Bildes auf der Mitte des Blattes. Alle Seiten von
 `gross.png` und `mehrseitig.tif`, letztere um 90 Grad gedreht, bestehen.
 
 Der weiße Grund ist der Fall, den man nicht sieht, wenn man nur ins PDF schaut.
-Geprüft wird er über eine Metadatei mit dem Drucker als Bezugsgerät:
-`PrintPageToDC` rechnet also mit den echten Maßen des Geräts, und die
-Aufzeichnung wird hinterher in eine Bitmap
-zurückgespielt, deren Grund magenta ist. Eine halb durchsichtige Vorlage
-ergab **240 000 rote, 240 000 weiße und null schwarze Punkte** — beide Hälften
-gleich groß, das Durchsichtige also weiß unterlegt und nicht schwarz.
+Geprüft wird er über eine Metadatei mit dem Drucker als Bezugsgerät —
+`PrintPageToDC` rechnet also mit den echten Maßen —, die hinterher in eine
+Bitmap mit magentafarbenem Grund zurückgespielt wird. Eine zur Hälfte
+durchsichtige Vorlage von 200 × 100 Punkten ergibt auf A4:
+
+| | Punkte |
+|---|---|
+| rot (deckende Hälfte) | 84 600 |
+| weiß (durchsichtige Hälfte) | 84 600 |
+| schwarz | **0** |
+| unbemalt (magenta) | 310 800 |
+
+Beide Hälften gleich groß, das Durchsichtige weiß unterlegt statt schwarz — und
+der unbemalte Rest belegt, dass die Einpassung erhalten bleibt und das Bild
+nicht über das Blatt gezerrt wird. Die Zahlen gehen auf: 600 × 800 abgespielte
+Punkte, davon 600 × 300 für ein Bild im Verhältnis 2 : 1 über die volle Breite.
 
 ## 10. Meilensteine
 
@@ -942,10 +1017,11 @@ gleich groß, das Durchsichtige also weiß unterlegt und nicht schwarz.
 | M7 | Hintergrund-Dekodierung, DPI, Vollbild, Fehlerbehandlung | **fertig** |
 | M8 | Anwendungssymbol, Versionsressource, Release-Build | **fertig** |
 | M9 | Drucken: Dialog, Einpassen aufs Blatt, Seitenbereich | **fertig** |
+| M10 | Seitenansicht vor dem Drucken | **fertig** |
 
 Nach M1–M2 ist der genannte Kernzweck erfüllt; M3–M4 liefern die Icon-Leiste
 aus der Anforderung; M5–M8 machen daraus einen Alltagsbetrachter. Mit M8 war
-v1.0.0 vollständig; M9 kam danach hinzu und ergibt v1.1.0.
+v1.0.0 vollständig; M9 ergab v1.1.0, M10 ergibt v1.2.0.
 
 ## 11. Bewusst nicht in v1
 

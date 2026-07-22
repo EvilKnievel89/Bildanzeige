@@ -173,7 +173,8 @@ namespace
 
             StartPage(dc);
             PrintPlacement platz;
-            const bool ok = PrintPageToDC(dc, wic, quelle.Get(), drehung, &platz, meldung);
+            const bool ok = PrintPageToDC(dc, wic, quelle.Get(), drehung, kPrintDpi, &platz,
+                                          meldung);
             EndPage(dc);
 
             if (!ok)
@@ -273,11 +274,17 @@ namespace
             return;
         }
 
-        HDC meta = CreateEnhMetaFileW(bezug, nullptr, nullptr, nullptr);
+        // Ohne den Rahmen setzt GDI ihn auf die Umrisse des Gezeichneten, und
+        // das Bild fuellte beim Abspielen die ganze Zielflaeche -- die Lage auf
+        // dem Blatt waere weg. Am magentafarbenen Rest unten ist zu sehen, dass
+        // sie erhalten bleibt.
+        const RECT rahmen = PrintMetafileFrame(bezug);
+        HDC meta = CreateEnhMetaFileW(bezug, nullptr, &rahmen, nullptr);
         std::wstring meldung;
         ComPtr<IWICBitmapSource> quelle;
         vorlage.As(&quelle);
-        const bool gezeichnet = PrintPageToDC(meta, wic, quelle.Get(), 0, nullptr, meldung);
+        const bool gezeichnet = PrintPageToDC(meta, wic, quelle.Get(), 0, kPrintDpi, nullptr,
+                                              meldung);
         HENHMETAFILE aufzeichnung = CloseEnhMetaFile(meta);
         DeleteDC(bezug);
 
@@ -340,6 +347,8 @@ namespace
         Pruefe(weiss > 0 && rot > 0, L"beide Haelften sind angekommen");
         Pruefe(rot > 0 && std::abs(rot - weiss) < rot / 5,
                L"die durchsichtige Haelfte ist so gross wie die deckende");
+        Pruefe(magenta > 0, L"unbemalter Rest vorhanden -- die Einpassung ist nicht "
+                            L"aufgeblaeht worden");
 
         SelectObject(speicher, vorher);
         DeleteObject(flaeche);

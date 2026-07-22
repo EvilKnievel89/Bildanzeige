@@ -1,6 +1,6 @@
 #include "MainWindow.h"
 
-#include "Printer.h"
+#include "PrintPreview.h"
 #include "Resource.h"
 
 #include <commctrl.h>
@@ -704,6 +704,13 @@ void MainWindow::Execute(ToolbarCommand command)
 // Gedruckt wird, was zu sehen ist: die gezeigte Seite in der Drehung der
 // Anzeige. Zoom und Ausschnitt bleiben aussen vor -- sie sind die Lupe, mit der
 // man das Bild betrachtet, nicht das Bild.
+//
+// Der Weg fuehrt ueber die Seitenansicht und nicht geradewegs in den
+// Druckdialog. Windows 11 hat den Dialog gegen einen eigenen ausgetauscht, und
+// dessen Vorschaufeld bleibt bei jeder Win32-Anwendung leer ("Diese App
+// unterstuetzt keine Seitenansicht") -- es will die Seiten schon haben, bevor
+// gedruckt wird, und eine GDI-Anwendung erzeugt sie erst danach. Die eigene
+// Ansicht davor schliesst die Luecke.
 void MainWindow::PrintCurrent()
 {
     if (!document_.IsOpen())
@@ -734,7 +741,7 @@ void MainWindow::PrintCurrent()
     }
 
     std::wstring error;
-    if (PrintImage(hwnd_, wic_.Get(), job, error) == PrintOutcome::Failed)
+    if (ShowPrintPreview(hwnd_, wic_.Get(), job, error) == PrintOutcome::Failed)
         MessageBoxW(hwnd_, error.c_str(), kAppTitle, MB_ICONWARNING | MB_OK);
 
     // Der Halt aus StopPlayback steht jetzt auch am Wiedergabeknopf.

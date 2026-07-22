@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21)
 
 # Diese Nummer ist die einzige Stelle, an der die Version steht. Die
 # Ressourcendatei bekommt sie ueber res/Version.h.in zugereicht.
-project(Bildanzeige VERSION 1.1.0 LANGUAGES CXX RC)
+project(Bildanzeige VERSION 1.2.0 LANGUAGES CXX RC)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -25,6 +25,7 @@ add_executable(Bildanzeige WIN32
     src/RenderView.cpp
     src/Toolbar.cpp
     src/Printer.cpp
+    src/PrintPreview.cpp
     res/Bildanzeige.rc
 )
 
@@ -45,7 +46,7 @@ set_source_files_properties(res/Bildanzeige.rc PROPERTIES OBJECT_DEPENDS
 )
 
 target_link_libraries(Bildanzeige PRIVATE
-    d2d1 windowscodecs ole32 shlwapi shell32 user32 comctl32 comdlg32 gdi32
+    d2d1 windowscodecs ole32 shlwapi shell32 user32 comctl32 comdlg32 gdi32 winspool
 )
 
 target_compile_definitions(Bildanzeige PRIVATE

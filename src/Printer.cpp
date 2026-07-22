@@ -13,14 +13,9 @@
 
 namespace
 {
-    // Feiner als das Geraet zu rechnen bringt nichts aufs Papier, und jenseits
-    // von 600 dpi ist am Blatt kein Unterschied mehr zu sehen. Treiber, die
-    // 1200 oder 2400 dpi melden, sind haeufig -- ohne diese Grenze legte ein
-    // A4-Auftrag dort ein halbes Gigabyte an, fuer nichts.
-    constexpr int kMaxRenderDpi = 600;
-
-    // Zweite Grenze, fuer grosses Papier: A0 bei 600 dpi waeren 550 Megapixel.
-    // 36 Millionen sind A4 bei 600 dpi mit Luft -- der Fall, um den es geht.
+    // Zweite Grenze neben maxDpi, fuer grosses Papier: A0 bei 600 dpi waeren
+    // 550 Megapixel. 36 Millionen sind A4 bei 600 dpi mit Luft -- der Fall, um
+    // den es geht, passt also darunter.
     constexpr double kMaxRenderPixels = 36'000'000.0;
 
     // Platz des Bildes auf dem Blatt: eingepasst unter Wahrung des
@@ -159,7 +154,7 @@ namespace
 }
 
 bool PrintPageToDC(HDC dc, IWICImagingFactory* wic, IWICBitmapSource* source, int rotationQuarters,
-                   PrintPlacement* placement, std::wstring& error)
+                   int maxDpi, PrintPlacement* placement, std::wstring& error)
 {
     ComPtr<IWICBitmapSource> turned = Turn(wic, source, rotationQuarters, error);
     if (!turned)
@@ -188,8 +183,9 @@ bool PrintPageToDC(HDC dc, IWICImagingFactory* wic, IWICBitmapSource* source, in
     // spart den Speicher fuer eine Vergroesserung, die nichts hinzufuegt.
     double allowed = static_cast<double>(place.width);
     const int dpi = GetDeviceCaps(dc, LOGPIXELSX);
-    if (dpi > kMaxRenderDpi)
-        allowed = allowed * kMaxRenderDpi / dpi;
+    const int ceiling = maxDpi > 0 ? maxDpi : kPrintDpi;
+    if (dpi > ceiling)
+        allowed = allowed * ceiling / dpi;
 
     double factor = std::min(1.0, allowed / width);
     const double pixels = (width * factor) * (height * factor);
@@ -279,6 +275,21 @@ bool PrintPageToDC(HDC dc, IWICImagingFactory* wic, IWICBitmapSource* source, in
         return false;
     }
     return true;
+}
+
+RECT PrintMetafileFrame(HDC printerDC)
+{
+    const int dpiX = GetDeviceCaps(printerDC, LOGPIXELSX);
+    const int dpiY = GetDeviceCaps(printerDC, LOGPIXELSY);
+    if (dpiX <= 0 || dpiY <= 0)
+        return RECT{ 0, 0, 0, 0 };
+
+    // 2540 Hundertstelmillimeter sind ein Zoll. Gerechnet wird aus HORZRES und
+    // LOGPIXELSX statt aus HORZSIZE: die beiden ersten beziehen sich sicher auf
+    // den bedruckbaren Bereich, waehrend HORZSIZE je nach Treiber auch das
+    // ganze Blatt meinen kann.
+    return RECT{ 0, 0, MulDiv(GetDeviceCaps(printerDC, HORZRES), 2540, dpiX),
+                 MulDiv(GetDeviceCaps(printerDC, VERTRES), 2540, dpiY) };
 }
 
 PrintOutcome PrintImage(HWND owner, IWICImagingFactory* wic, const PrintJob& job,
@@ -418,8 +429,8 @@ PrintOutcome PrintImage(HWND owner, IWICImagingFactory* wic, const PrintJob& job
                     ok = false;
                     break;
                 }
-                if (!PrintPageToDC(dialog.hDC, wic, source.Get(), job.rotationQuarters, nullptr,
-                                   error))
+                if (!PrintPageToDC(dialog.hDC, wic, source.Get(), job.rotationQuarters, kPrintDpi,
+                                   nullptr, error))
                 {
                     ok = false;
                     break;

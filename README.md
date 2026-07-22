@@ -52,7 +52,7 @@ können auch auf das Fenster gezogen werden.
 | `Strg`+`0` | Originalgröße |
 | `Strg`+Pfeiltaste | Ausschnitt verschieben |
 | `Strg`+`L` / `Strg`+`R` | links / rechts drehen |
-| `Strg`+`P` | drucken |
+| `Strg`+`P` | Seitenansicht (von dort drucken) |
 | `F11`, Doppelklick aufs Bild | Vollbild ein / aus |
 | `Esc` | Vollbild verlassen, sonst schließen |
 
@@ -89,12 +89,26 @@ Herauszoomen endet beim Einpassen — kleiner als nötig wird nicht gezeigt, und
 kleine Bilder werden nicht aufgeblasen. Oberhalb von 100 % wird nicht geglättet,
 damit bei einem Scan die vorhandenen Pixel sichtbar bleiben.
 
+Der Druckknopf öffnet zuerst die **Seitenansicht**: das Blatt so, wie es aus
+dem Gerät kommt, samt dem Rand, den der Drucker nicht erreicht. Sie ist keine
+Nachempfindung — gezeichnet wird mit derselben Funktion, die auch druckt, nur
+in eine Metadatei statt in den Drucker. Bei mehrseitigen Dateien wird darin mit
+`Bild↑`/`Bild↓` oder den Pfeilknöpfen geblättert; von dort führt „Drucken …"
+in den Druckdialog. Gerechnet wird mit dem Standarddrucker, und der steht im
+Fenstertitel.
+
 Gedruckt wird die gezeigte Seite, in der Drehung der Anzeige, eingepasst aufs
 Blatt und darauf zentriert. Zoom und Ausschnitt bleiben außen vor — sie sind
-die Lupe, mit der man das Bild betrachtet, nicht das Bild. Bei einer
-mehrseitigen Datei bietet der Druckdialog Alle, Aktuelle Seite und einen
-Bereich an; vorgewählt ist die gezeigte Seite. Eine Animation zählt als eine
-Seite. Während des Druckens steht das Fenster.
+die Lupe, mit der man das Bild betrachtet, nicht das Bild. Eine Animation zählt
+als eine Seite. Während des Druckens steht das Fenster.
+
+Windows 11 hat den Druckdialog gegen einen eigenen ausgetauscht. Dessen
+Vorschaufeld bleibt bei jeder Win32-Anwendung leer („Diese App unterstützt
+keine Seitenansicht"), und „Aktuelle Seite" bietet er nicht mehr an — beides
+liegt an ihm, nicht an dieser Anwendung. Die eigene Seitenansicht schließt die
+erste Lücke; für die zweite blättert man in ihr zur gewünschten Seite, die dann
+als aktuelle Seite in den Auftrag geht. Näheres in [PLAN.md](PLAN.md),
+Abschnitt 9.
 
 Im Vollbild bleibt die Icon-Leiste stehen. Ohne Rahmen und Menü ist sie der
 einzige sichtbare Rückweg, und vierzig Punkte am unteren Rand kosten auf einem
@@ -114,13 +128,13 @@ bedeutet also weiterhin, was in der Datei steht.
 
 ## Stand
 
-**Version 1.1.0**, alle neun Meilensteine abgeschlossen — Fenster,
+**Version 1.2.0**, alle zehn Meilensteine abgeschlossen — Fenster,
 Direct2D-Darstellung, Datei per Kommandozeile, Multi-Frame-Dekodierung,
 Seitenwechsel, Icon-Leiste, Rotation, Zoom, Verschieben, Einpassen und
 Originalgröße, GIF-Animation, Ordnernavigation, Drag & Drop,
 EXIF-Orientierung, Hintergrund-Dekodierung, Vollbild, DPI-Wechsel,
 Fehlerbehandlung, Anwendungssymbol, Versionsangaben, Release-Build sowie
-Drucken.
+Drucken mit Seitenansicht.
 
 Was bewusst nicht darin steckt — Rotation speichern, Löschen, Diashow,
 Registrierung als Standardanwendung — steht in [PLAN.md](PLAN.md).
