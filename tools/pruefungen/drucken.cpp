@@ -208,10 +208,15 @@ namespace
             wprintf(L"    Seite %u: %5u x %-5u  ->  %d x %d  bei (%d, %d)\n", seite + 1, bildW,
                     bildH, platz.width, platz.height, platz.x, platz.y);
 
-            // Seitenverhältnis: das Bild darf nicht verzerrt aufs Blatt.
+            // Seitenverhältnis: das Bild darf nicht verzerrt aufs Blatt. Jede
+            // Kante wird auf ganze Gerätepunkte gerundet; bei einem sehr
+            // schmalen Bild wiegt der halbe Punkt am kurzen Maß schwerer als
+            // die Grundtoleranz -- er wird deshalb mitgerechnet.
             const double sollte = static_cast<double>(bildW) / bildH;
             const double ist = static_cast<double>(platz.width) / platz.height;
-            Pruefe(std::fabs(sollte - ist) / sollte < 0.002, L"Seitenverhältnis bleibt erhalten");
+            const double toleranz = 0.002 + 0.5 / platz.width + 0.5 / platz.height;
+            Pruefe(std::fabs(sollte - ist) / sollte < toleranz,
+                   L"Seitenverhältnis bleibt erhalten");
 
             // Der Maßstab, der herauskommen muss: einpassen darf nur
             // verkleinern, solange nicht ausdrücklich vergrößert werden soll.

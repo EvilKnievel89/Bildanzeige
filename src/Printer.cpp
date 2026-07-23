@@ -199,22 +199,25 @@ namespace
 bool PrintPageToDC(HDC dc, IWICImagingFactory* wic, IWICBitmapSource* source, int rotationQuarters,
                    bool enlargeToFit, int maxDpi, PrintPlacement* placement, std::wstring& error)
 {
-    ComPtr<IWICBitmapSource> turned = Turn(wic, source, rotationQuarters, error);
-    if (!turned)
-        return false;
+    const int turns = ((rotationQuarters % 4) + 4) % 4;
 
-    UINT width = 0;
-    UINT height = 0;
-    if (FAILED(turned->GetSize(&width, &height)) || width == 0 || height == 0)
+    UINT sourceWidth = 0;
+    UINT sourceHeight = 0;
+    if (source == nullptr || FAILED(source->GetSize(&sourceWidth, &sourceHeight)) ||
+        sourceWidth == 0 || sourceHeight == 0)
     {
         error = L"Das Bild hat keine brauchbare Größe.";
         return false;
     }
 
-    // Gefragt wird die Quelle, nicht das gedrehte Zwischenbild: der
-    // IWICBitmapFlipRotator reicht die Feinheit unverändert weiter und meldete
-    // nach einer Vierteldrehung die Achsen vertauscht. NaturalScale dreht sie
-    // selbst.
+    // Gerechnet wird in den Maßen nach der Drehung; gedreht wird aber erst
+    // ganz am Ende, am fertig verkleinerten Bild -- warum, steht unten beim
+    // Puffern.
+    const UINT width = turns % 2 != 0 ? sourceHeight : sourceWidth;
+    const UINT height = turns % 2 != 0 ? sourceWidth : sourceHeight;
+
+    // NaturalScale fragt die ungedrehte Quelle und vertauscht die Achsen der
+    // Feinheit selbst.
     const double maxScale = enlargeToFit ? 0.0 : NaturalScale(dc, source, rotationQuarters);
 
     const PrintPlacement place = FitOnSheet(dc, width, height, maxScale);
@@ -244,10 +247,36 @@ bool PrintPageToDC(HDC dc, IWICImagingFactory* wic, IWICBitmapSource* source, in
     const UINT renderWidth = std::max(1u, static_cast<UINT>(std::lround(width * factor)));
     const UINT renderHeight = std::max(1u, static_cast<UINT>(std::lround(height * factor)));
 
-    ComPtr<IWICBitmapSource> ready = turned;
-    if (renderWidth != width || renderHeight != height)
+    // Verkleinert wird vor der Drehung, in den Achsen der Quelle: so liest der
+    // Scaler sie zeilenweise in einem einzigen Durchlauf.
+    const UINT scaledWidth = turns % 2 != 0 ? renderHeight : renderWidth;
+    const UINT scaledHeight = turns % 2 != 0 ? renderWidth : renderHeight;
+    ComPtr<IWICBitmapSource> ready(source);
+    if (scaledWidth != sourceWidth || scaledHeight != sourceHeight)
     {
-        ready = ScaleTo(wic, turned.Get(), renderWidth, renderHeight, error);
+        ready = ScaleTo(wic, source, scaledWidth, scaledHeight, error);
+        if (!ready)
+            return false;
+    }
+
+    if (turns != 0)
+    {
+        // Vor den Rotator gehört ein Puffer: bei einer Vierteldrehung fordert
+        // er die Punkte einzeln an, und jede dieser Anfragen kostet die
+        // Decoderkette eine ganze Zeile -- quadratischer Aufwand, der bei einem
+        // breiten Bild wie ein Hänger wirkt. Auf einem IWICBitmap ist der
+        // wahlfreie Zugriff dagegen billig; die WIC-Dokumentation rät genau zu
+        // dieser Pufferung. Weil schon verkleinert ist, bleibt der Puffer
+        // unter kMaxRenderPixels.
+        ComPtr<IWICBitmap> cached;
+        const HRESULT cacheHr =
+            wic->CreateBitmapFromSource(ready.Get(), WICBitmapCacheOnLoad, &cached);
+        if (FAILED(cacheHr))
+        {
+            error = L"Das Bild ließ sich nicht lesen.\n\n" + FormatHResult(cacheHr);
+            return false;
+        }
+        ready = Turn(wic, cached.Get(), turns, error);
         if (!ready)
             return false;
     }
@@ -272,6 +301,11 @@ bool PrintPageToDC(HDC dc, IWICImagingFactory* wic, IWICBitmapSource* source, in
         error = L"Das Bild ließ sich nicht lesen.\n\n" + FormatHResult(hr);
         return false;
     }
+
+    // Die Kette ist abgelesen; bei einer Drehung hängt an ihr noch das
+    // gepufferte Zwischenbild. Erst freigeben, dann drucken -- der Treiber
+    // braucht gleich selbst Speicher.
+    ready.Reset();
 
     // Papier ist weiß. Ohne das Unterlegen käme jede durchsichtige Stelle als
     // Schwarz heraus, denn in vormultiplizierten Werten steht dort eine Null.
