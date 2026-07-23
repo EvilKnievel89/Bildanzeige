@@ -190,7 +190,7 @@ bedeutet also weiterhin, was in der Datei steht.
 
 ## Stand
 
-**Version 1.3.1**, alle elf Meilensteine abgeschlossen — Fenster,
+**Version 1.3.2**, alle elf Meilensteine abgeschlossen — Fenster,
 Direct2D-Darstellung, Datei per Kommandozeile, Multi-Frame-Dekodierung,
 Seitenwechsel, Icon-Leiste, Rotation, Zoom, Verschieben, Einpassen und
 Originalgröße, GIF-Animation, Ordnernavigation, Drag & Drop,
