@@ -100,6 +100,15 @@ stehen — wer in ein Detail hineingezoomt hat, findet es im nächsten Einzelbil
 wieder. Die Bildzählung steht nur im Halt im Fenstertitel; während der
 Wiedergabe ließe sie ihn nur flimmern.
 
+Das **Fenster nimmt die Größe des Bildes an** — ein Bildpunkt ist ein
+Bildschirmpunkt, und unter der Bildfläche kommt die Icon-Leiste hinzu. Es
+wächst dabei nicht über den Arbeitsbereich hinaus: was größer ist als der
+Bildschirm, endet an dessen Rand und wird wie gewohnt in die Fläche eingepasst.
+Nach unten begrenzen es die Knöpfe der Leiste, damit sie bei einem
+Vorschaubildchen nicht abgeschnitten stehen. Eine Vierteldrehung vertauscht
+Breite und Höhe, das Fenster geht mit. Im Vollbild und im maximierten Zustand
+bleibt es, wie es ist: dort ist die Größe ausdrücklich gesetzt.
+
 Ist das Bild größer als das Fenster, lässt es sich mit gedrückter linker
 Maustaste ziehen. Das Mausrad zoomt auf die Stelle unter dem Zeiger. Ein grauer
 Knopf sagt zugleich, wie das Bild gerade steht: „Einpassen" ist grau, solange

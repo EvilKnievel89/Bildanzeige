@@ -339,6 +339,34 @@ float Toolbar::Height() const
     return std::floor(kBarHeight * dpiScale_ + 0.5f);
 }
 
+// Breite, die die sichtbaren Knöpfe samt Zwischenräumen einnehmen.
+float Toolbar::ButtonsWidth() const
+{
+    const float button = std::floor(kButtonSize * dpiScale_ + 0.5f);
+    const float gap = std::floor(kButtonGap * dpiScale_ + 0.5f);
+    const float groupGap = std::floor(kGroupGap * dpiScale_ + 0.5f);
+
+    float total = 0.0f;
+    bool anyPlaced = false;
+    for (const ToolbarButton& b : buttons_)
+    {
+        if (!b.visible)
+            continue;
+        if (anyPlaced)
+            total += b.groupStart ? groupGap : gap;
+        total += button;
+        anyPlaced = true;
+    }
+    return total;
+}
+
+float Toolbar::MinimumWidth() const
+{
+    // Beidseits ein Zwischenraum als Luft zum Rand; ohne ihn klebten die
+    // äußeren Knöpfe genau auf der Kante.
+    return ButtonsWidth() + 2.0f * std::floor(kButtonGap * dpiScale_ + 0.5f);
+}
+
 const ToolbarButton* Toolbar::Find(ToolbarCommand command) const
 {
     for (const ToolbarButton& b : buttons_)
@@ -383,22 +411,10 @@ void Toolbar::Layout(float clientWidth, float clientHeight)
     strip_ = D2D1::RectF(0.0f, clientHeight - height, clientWidth, clientHeight);
     separators_.clear();
 
-    float total = 0.0f;
-    bool anyPlaced = false;
-    for (const ToolbarButton& b : buttons_)
-    {
-        if (!b.visible)
-            continue;
-        if (anyPlaced)
-            total += b.groupStart ? groupGap : gap;
-        total += button;
-        anyPlaced = true;
-    }
-
-    float x = std::floor((clientWidth - total) * 0.5f);
+    float x = std::floor((clientWidth - ButtonsWidth()) * 0.5f);
     const float y = std::floor(strip_.top + (height - button) * 0.5f);
 
-    anyPlaced = false;
+    bool anyPlaced = false;
     for (ToolbarButton& b : buttons_)
     {
         if (!b.visible)

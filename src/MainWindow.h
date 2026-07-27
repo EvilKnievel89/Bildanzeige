@@ -55,6 +55,8 @@ private:
     bool OnSetCursor();
     void RefreshCursor();
     void OnDpiChanged(UINT dpi, const RECT* suggested);
+    void FitWindowToImage();
+    RECT FrameOverhang() const;
     void ToggleFullscreen();
     void RecreateDeviceResources();
     void UpdateTitle();

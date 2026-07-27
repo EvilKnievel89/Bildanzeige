@@ -48,6 +48,11 @@ public:
     void SetDpiScale(float scale);
     float Height() const;
 
+    // Breite, unter die das Fenster nicht schrumpfen darf: darunter stünden die
+    // äußeren Knöpfe über den Rand hinaus und wären nicht mehr zu treffen.
+    // Hängt davon ab, welche Knöpfe gerade sichtbar sind.
+    float MinimumWidth() const;
+
     void SetVisible(ToolbarCommand command, bool visible);
     void SetEnabled(ToolbarCommand command, bool enabled);
     bool IsEnabled(ToolbarCommand command) const;
@@ -70,6 +75,7 @@ public:
     const std::vector<ToolbarButton>& Buttons() const { return buttons_; }
 
 private:
+    float ButtonsWidth() const;
     const ToolbarButton* Find(ToolbarCommand command) const;
     ToolbarButton* Find(ToolbarCommand command);
     void DrawIcon(ID2D1RenderTarget* target, const ToolbarButton& button, ID2D1Brush* brush);

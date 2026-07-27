@@ -37,9 +37,16 @@ namespace
     // soll überhaupt als Warten in Erscheinung treten.
     constexpr UINT kLoadingDelayMs = 150;
 
-    // Fenstergröße bei 96 dpi; auf anderen Stufen entsprechend vervielfacht.
+    // Fenstergröße bei 96 dpi, solange noch kein Bild da ist; auf anderen
+    // Stufen entsprechend vervielfacht. Sobald ein Bild dasteht, gibt dessen
+    // Größe das Maß vor.
     constexpr int kInitialClientWidth = 1000;
     constexpr int kInitialClientHeight = 660;
+
+    // Ein Bild von wenigen Pixeln soll das Fenster nicht auf einen Streifen
+    // zusammenziehen: so hoch bleibt die Bildfläche mindestens (bei 96 dpi).
+    // Für die Breite sorgt die Icon-Leiste selbst.
+    constexpr int kMinImageHeight = 120;
 
     LONGLONG QpcNow()
     {
@@ -139,21 +146,13 @@ bool MainWindow::Create(HINSTANCE instance, int showCmd)
         SetWindowPos(hwnd_, nullptr, left, top, desired.right - desired.left,
                      desired.bottom - desired.top, flags);
 
-        // Seit Windows 10 reicht das Fensterrechteck links, rechts und unten um
-        // einen unsichtbaren Anfasserrand über den sichtbaren Rahmen hinaus.
-        // Wer das Rechteck auf die Ecke setzt, sieht das Fenster deshalb ein
-        // paar Pixel zu weit rechts. DWM kennt die tatsächlich sichtbaren
-        // Grenzen; deren Abstand zum Fensterrechteck wird hier abgezogen, damit
-        // der sichtbare Rahmen bündig in der Ecke sitzt.
-        RECT visible{};
-        RECT window{};
-        if ((flags & SWP_NOMOVE) == 0 &&
-            SUCCEEDED(DwmGetWindowAttribute(hwnd_, DWMWA_EXTENDED_FRAME_BOUNDS, &visible,
-                                            sizeof(visible))) &&
-            GetWindowRect(hwnd_, &window))
+        // Der unsichtbare Anfasserrand wird herausgerechnet, damit der
+        // sichtbare Rahmen bündig in der Ecke sitzt und nicht ein paar Pixel
+        // weiter rechts. Siehe FrameOverhang.
+        if ((flags & SWP_NOMOVE) == 0)
         {
-            SetWindowPos(hwnd_, nullptr, left - (visible.left - window.left),
-                         top - (visible.top - window.top), 0, 0,
+            const RECT overhang = FrameOverhang();
+            SetWindowPos(hwnd_, nullptr, left - overhang.left, top - overhang.top, 0, 0,
                          SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
         }
     }
@@ -757,13 +756,18 @@ void MainWindow::Execute(ToolbarCommand command)
         AfterViewChange();
         break;
 
+    // Nach einer Vierteldrehung steht das Bild hochkant statt quer -- das
+    // Fenster geht mit, sonst bliebe rechts und links ein breiter Streifen
+    // Hintergrund stehen.
     case ToolbarCommand::RotateLeft:
         view_.View().Rotate(-1);
+        FitWindowToImage();
         AfterViewChange();
         break;
 
     case ToolbarCommand::RotateRight:
         view_.View().Rotate(+1);
+        FitWindowToImage();
         AfterViewChange();
         break;
 
@@ -827,6 +831,116 @@ void MainWindow::PrintCurrent()
     ApplyButtonStates();
     UpdateTitle();
     InvalidateToolbar();
+}
+
+// Wie weit das Fensterrechteck über den sichtbaren Rahmen hinausragt.
+//
+// Seit Windows 10 liegt links, rechts und unten ein unsichtbarer Anfasserrand
+// von einigen Pixeln außerhalb dessen, was man sieht -- er gehört zum
+// Fensterrechteck, nicht zum Fenster. Wer nur in Fensterrechtecken rechnet,
+// setzt das Fenster deshalb neben die Ecke und lässt es ebenso weit über den
+// Arbeitsbereich hinausstehen. DWM kennt die sichtbaren Grenzen; hier steht
+// der Abstand je Seite, stets nicht-negativ. Bleibt die Auskunft aus, sind es
+// lauter Nullen und es wird wie ohne diese Korrektur gerechnet.
+RECT MainWindow::FrameOverhang() const
+{
+    RECT overhang{};
+    RECT visible{};
+    RECT window{};
+    if (SUCCEEDED(DwmGetWindowAttribute(hwnd_, DWMWA_EXTENDED_FRAME_BOUNDS, &visible,
+                                        sizeof(visible))) &&
+        GetWindowRect(hwnd_, &window))
+    {
+        overhang.left = std::max<LONG>(visible.left - window.left, 0);
+        overhang.top = std::max<LONG>(visible.top - window.top, 0);
+        overhang.right = std::max<LONG>(window.right - visible.right, 0);
+        overhang.bottom = std::max<LONG>(window.bottom - visible.bottom, 0);
+    }
+    return overhang;
+}
+
+// Das Fenster nimmt die Größe des Bildes an.
+//
+// Gemeint ist das Bild, wie es dasteht: eine Vierteldrehung vertauscht Breite
+// und Höhe, und unter der Bildfläche kommt die Icon-Leiste hinzu. Der Maßstab
+// ist dabei 1:1 -- das Render-Target rechnet in Pixeln, ein Bildpunkt ist ein
+// Bildschirmpunkt, auch auf einer anderen DPI-Stufe.
+//
+// Im Vollbild und im maximierten Zustand geschieht nichts: dort ist die Größe
+// ausdrücklich gesetzt worden, und sie zu übergehen hieße, den Zustand
+// aufzulösen. Passt das Bild nicht auf den Bildschirm, endet das Fenster am
+// Arbeitsbereich, und das Bild wird wie gewohnt hineingepasst.
+void MainWindow::FitWindowToImage()
+{
+    if (fullscreen_ || IsZoomed(hwnd_) || IsIconic(hwnd_) || !view_.HasImage())
+        return;
+
+    const D2D1_SIZE_F image = view_.View().ShownSize();
+    if (image.width <= 0.0f || image.height <= 0.0f)
+        return;
+
+    MONITORINFO info{};
+    info.cbSize = sizeof(info);
+    if (!GetMonitorInfoW(MonitorFromWindow(hwnd_, MONITOR_DEFAULTTONEAREST), &info))
+        return;
+
+    RECT window{};
+    if (!GetWindowRect(hwnd_, &window))
+        return;
+
+    // Rahmen und Titelzeile kommen zur Bildfläche hinzu; ihr Maß hängt an der
+    // DPI-Stufe des Bildschirms, auf dem das Fenster steht.
+    const UINT dpi = GetDpiForWindow(hwnd_);
+    const float dpiScale = static_cast<float>(dpi > 0 ? dpi : 96) / 96.0f;
+    RECT frame{};
+    if (!AdjustWindowRectExForDpi(&frame, static_cast<DWORD>(GetWindowLongPtrW(hwnd_, GWL_STYLE)),
+                                  FALSE,
+                                  static_cast<DWORD>(GetWindowLongPtrW(hwnd_, GWL_EXSTYLE)), dpi))
+    {
+        return;
+    }
+    const LONG frameWidth = frame.right - frame.left;
+    const LONG frameHeight = frame.bottom - frame.top;
+
+    const RECT overhang = FrameOverhang();
+    const LONG toolbar = std::lround(toolbar_.Height());
+
+    // Die Obergrenze ist der Arbeitsbereich, nicht der ganze Bildschirm: unter
+    // der Taskleiste liegt kein Platz. Verglichen wird der sichtbare Rahmen --
+    // der Anfasserrand darf darüber hinausragen, genau wie bei einem
+    // maximierten Fenster.
+    const LONG maxClientWidth = (info.rcWork.right - info.rcWork.left) - frameWidth +
+                                overhang.left + overhang.right;
+    const LONG maxClientHeight = (info.rcWork.bottom - info.rcWork.top) - frameHeight +
+                                 overhang.top + overhang.bottom;
+
+    const LONG minClientWidth = std::lround(toolbar_.MinimumWidth());
+    const LONG minClientHeight = toolbar + std::lround(kMinImageHeight * dpiScale);
+
+    // Bei einem sehr kleinen Bildschirm kann die Untergrenze über der
+    // Obergrenze liegen. Dann gilt die Obergrenze: aus dem Fenster
+    // hinauszuwachsen wäre schlimmer als eine angeschnittene Leiste.
+    const LONG clientWidth = std::min(std::max(std::lround(image.width), minClientWidth),
+                                      std::max(maxClientWidth, 1L));
+    const LONG clientHeight =
+        std::min(std::max(std::lround(image.height) + toolbar, minClientHeight),
+                 std::max(maxClientHeight, 1L));
+
+    const LONG width = clientWidth + frameWidth;
+    const LONG height = clientHeight + frameHeight;
+
+    // Die obere linke Ecke bleibt liegen, das Fenster wächst nach rechts und
+    // unten. Stünde es damit über den Arbeitsbereich hinaus, rückt es so weit
+    // zurück, dass es wieder hineinpasst -- die Größe von oben ist so gewählt,
+    // dass das immer gelingt.
+    LONG left = window.left;
+    LONG top = window.top;
+    left -= std::max<LONG>((left + width - overhang.right) - info.rcWork.right, 0);
+    top -= std::max<LONG>((top + height - overhang.bottom) - info.rcWork.bottom, 0);
+    left = std::max(left, info.rcWork.left - overhang.left);
+    top = std::max(top, info.rcWork.top - overhang.top);
+
+    SetWindowPos(hwnd_, nullptr, left, top, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
 // Das Vollbild nimmt dem Fenster nur den Rahmen und legt es über den ganzen
@@ -1061,6 +1175,11 @@ void MainWindow::OnDpiChanged(UINT dpi, const RECT* suggested)
     }
 
     ApplyDpi(dpi);
+
+    // Der Vorschlag des Systems rechnet das ganze Fenster auf die neue Stufe
+    // um -- das Bild bleibt dabei aber gleich groß, es zählt in Pixeln. Rahmen
+    // und Leiste sind nun anders hoch, also wird das Maß neu genommen.
+    FitWindowToImage();
     InvalidateRect(hwnd_, nullptr, FALSE);
 }
 
@@ -1185,6 +1304,7 @@ bool MainWindow::ShowFrame(UINT index)
         ApplyPendingRotation();
         UpdateTitle();
         UpdateToolbarState();
+        FitWindowToImage();
         InvalidateRect(hwnd_, nullptr, FALSE);
         return true;
     }
@@ -1304,6 +1424,10 @@ void MainWindow::OnDecodeReady()
 
     UpdateTitle();
     UpdateToolbarState();
+
+    // Erst nach UpdateToolbarState: welche Knöpfe die Leiste zeigt, entscheidet
+    // sich dort, und davon hängt ab, wie schmal das Fenster werden darf.
+    FitWindowToImage();
     InvalidateRect(hwnd_, nullptr, FALSE);
 
     if (!error.empty())

@@ -30,6 +30,11 @@ public:
     void PanBy(float dx, float dy);                     // in Fensterpixeln
 
     D2D1_SIZE_F ImageSize() const { return image_; }
+
+    // Die Größe, in der das Bild dasteht: bei einer Vierteldrehung sind Breite
+    // und Höhe vertauscht. Danach richtet sich das Fenster.
+    D2D1_SIZE_F ShownSize() const { return Shown(); }
+
     bool HasImage() const;
     bool IsFit() const { return fit_; }
     bool IsActualSize() const;
