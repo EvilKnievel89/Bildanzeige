@@ -5,11 +5,12 @@
 # die EXE liegt als Artefakt am Lauf).
 #
 # Die Runner bringen MSVC, CMake und Ninja bereits mit. Was fehlt, ist die
-# eingerichtete Compiler-Umgebung (vcvars) -- die stellt msvc-dev-cmd her,
-# damit das Preset msvc-x64 sein cl.exe findet. Diese Aktion wird seit 2024
-# nicht mehr gepflegt und laeuft weiterhin auf Node 20; GitHub fuehrt sie
-# ersatzweise auf Node 24 aus und warnt darueber. Solange sie ihre Arbeit
-# tut, bleibt sie -- ansonsten waere vcvars von Hand aufzurufen.
+# eingerichtete Compiler-Umgebung (vcvars), damit das Preset msvc-x64 sein
+# cl.exe findet. Das erledigte frueher ilammy/msvc-dev-cmd; die Aktion wird
+# seit 2024 nicht mehr gepflegt, blieb auf Node 20 stehen und wurde von GitHub
+# nur noch ersatzweise ausgefuehrt. Sie ist durch das ersetzt, was sie tat --
+# ein Aufruf von vcvars64. Das ist eine Fremdabhaengigkeit weniger in der
+# Baukette und nichts, was noch einmal veralten kann.
 
 name: Build
 
@@ -27,10 +28,26 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # vswhere gehoert zum Visual-Studio-Installer und liegt auf jedem Runner
+      # an derselben Stelle; es sagt, wohin die jeweils neueste Installation
+      # geraten ist. vcvars64 richtet daraufhin Host und Ziel x64 ein.
+      #
+      # Was dabei gesetzt wird, gilt zunaechst nur in dieser cmd-Sitzung -- die
+      # endet mit dem Schritt. Die vier Variablen, auf die es ankommt, wandern
+      # deshalb nach GITHUB_ENV und stehen damit auch dem Konfigurieren und
+      # Bauen zur Verfuegung. Umgeleitet wird vor dem echo: stuende ">>" hinter
+      # einem Wert, der auf eine Ziffer endet, laese cmd sie als Nummer eines
+      # Ausgabekanals.
       - name: MSVC-Umgebung einrichten
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
+        shell: cmd
+        run: |
+          for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "VSPATH=%%i"
+          if not defined VSPATH (echo Keine Visual-Studio-Installation mit C++-Werkzeugen gefunden. & exit /b 1)
+          call "%VSPATH%\VC\Auxiliary\Build\vcvars64.bat" || exit /b 1
+          >>"%GITHUB_ENV%" echo PATH=%PATH%
+          >>"%GITHUB_ENV%" echo INCLUDE=%INCLUDE%
+          >>"%GITHUB_ENV%" echo LIB=%LIB%
+          >>"%GITHUB_ENV%" echo LIBPATH=%LIBPATH%
 
       - name: Konfigurieren
         run: cmake --preset msvc-x64
