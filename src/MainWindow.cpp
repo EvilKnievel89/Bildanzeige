@@ -5,6 +5,7 @@
 #include "Resource.h"
 
 #include <commctrl.h>
+#include <dwmapi.h>
 #include <shellapi.h>
 #include <shlwapi.h>
 #include <windowsx.h>
@@ -117,9 +118,44 @@ bool MainWindow::Create(HINSTANCE instance, int showCmd)
                      static_cast<LONG>(kInitialClientHeight * dpiScale) };
     if (AdjustWindowRectExForDpi(&desired, WS_OVERLAPPEDWINDOW, FALSE, WS_EX_ACCEPTFILES, dpi))
     {
-        SetWindowPos(hwnd_, nullptr, 0, 0, desired.right - desired.left,
-                     desired.bottom - desired.top,
-                     SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+        // Startplatz ist immer die obere linke Ecke -- rcWork, nicht rcMonitor,
+        // damit eine oben oder links angedockte Taskleiste die Titelzeile nicht
+        // verdeckt. Bei nur einem Bildschirm ist beides dieselbe Ecke.
+        MONITORINFO info{};
+        info.cbSize = sizeof(info);
+        LONG left = 0;
+        LONG top = 0;
+        UINT flags = SWP_NOZORDER | SWP_NOACTIVATE;
+        if (GetMonitorInfoW(MonitorFromWindow(hwnd_, MONITOR_DEFAULTTOPRIMARY), &info))
+        {
+            left = info.rcWork.left;
+            top = info.rcWork.top;
+        }
+        else
+        {
+            flags |= SWP_NOMOVE;
+        }
+
+        SetWindowPos(hwnd_, nullptr, left, top, desired.right - desired.left,
+                     desired.bottom - desired.top, flags);
+
+        // Seit Windows 10 reicht das Fensterrechteck links, rechts und unten um
+        // einen unsichtbaren Anfasserrand über den sichtbaren Rahmen hinaus.
+        // Wer das Rechteck auf die Ecke setzt, sieht das Fenster deshalb ein
+        // paar Pixel zu weit rechts. DWM kennt die tatsächlich sichtbaren
+        // Grenzen; deren Abstand zum Fensterrechteck wird hier abgezogen, damit
+        // der sichtbare Rahmen bündig in der Ecke sitzt.
+        RECT visible{};
+        RECT window{};
+        if ((flags & SWP_NOMOVE) == 0 &&
+            SUCCEEDED(DwmGetWindowAttribute(hwnd_, DWMWA_EXTENDED_FRAME_BOUNDS, &visible,
+                                            sizeof(visible))) &&
+            GetWindowRect(hwnd_, &window))
+        {
+            SetWindowPos(hwnd_, nullptr, left - (visible.left - window.left),
+                         top - (visible.top - window.top), 0, 0,
+                         SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        }
     }
 
     ShowWindow(hwnd_, showCmd);

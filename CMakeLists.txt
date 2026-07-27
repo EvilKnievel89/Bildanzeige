@@ -49,6 +49,7 @@ set_source_files_properties(res/Bildanzeige.rc PROPERTIES OBJECT_DEPENDS
 
 target_link_libraries(Bildanzeige PRIVATE
     d2d1 windowscodecs ole32 shlwapi shell32 user32 comctl32 comdlg32 gdi32 winspool advapi32
+    dwmapi
 )
 
 target_compile_definitions(Bildanzeige PRIVATE
