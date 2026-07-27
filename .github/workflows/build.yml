@@ -6,7 +6,10 @@
 #
 # Die Runner bringen MSVC, CMake und Ninja bereits mit. Was fehlt, ist die
 # eingerichtete Compiler-Umgebung (vcvars) -- die stellt msvc-dev-cmd her,
-# damit das Preset msvc-x64 sein cl.exe findet.
+# damit das Preset msvc-x64 sein cl.exe findet. Diese Aktion wird seit 2024
+# nicht mehr gepflegt und laeuft weiterhin auf Node 20; GitHub fuehrt sie
+# ersatzweise auf Node 24 aus und warnt darueber. Solange sie ihre Arbeit
+# tut, bleibt sie -- ansonsten waere vcvars von Hand aufzurufen.
 
 name: Build
 
@@ -22,7 +25,7 @@ jobs:
       contents: write   # zum Anlegen des Release; für den reinen Bau ohne Belang
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: MSVC-Umgebung einrichten
         uses: ilammy/msvc-dev-cmd@v1
@@ -38,14 +41,14 @@ jobs:
       # Für von Hand gestartete Läufe (ohne Tag, also ohne Release) ist
       # das Artefakt der einzige Weg, an die gebaute EXE zu kommen.
       - name: Artefakt ablegen
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Bildanzeige
           path: build/Release/Bildanzeige.exe
 
       - name: Release anlegen
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: build/Release/Bildanzeige.exe
           generate_release_notes: true
