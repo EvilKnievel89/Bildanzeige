@@ -571,19 +571,33 @@ PrintOutcome ShowPrintPreview(HWND owner, IWICImagingFactory* wic, const PrintJo
 
     // Größe erst jetzt, aus demselben Grund wie beim Hauptfenster: fest in
     // Pixeln angegeben wäre das Fenster bei 150 % nur zwei Drittel so groß
-    // wie gemeint. Gesetzt wird es mittig über dem Hauptfenster.
+    // wie gemeint.
+    //
+    // Gesetzt wird es mittig auf den Arbeitsbereich des Bildschirms, auf dem
+    // das Hauptfenster steht -- und ausdrücklich nicht mittig über dem
+    // Hauptfenster. Das stand vorher hier und ging regelmäßig daneben: die
+    // Seitenansicht ist ein hochkantes Blatt und mit 640 x 820 DIP bei 150 %
+    // schon 960 x 1230 Bildpunkte groß, also höher als der Arbeitsbereich
+    // eines gewöhnlichen Schirms. Über einem Fenster ausgerichtet, das selbst
+    // am Rand steht, ragte sie zur Hälfte hinaus -- mitsamt der Knopfleiste
+    // am unteren Rand, an der "Drucken" und "Schließen" hängen.
+    //
+    // Der Arbeitsbereich und nicht der ganze Schirm: unter der Taskleiste
+    // liegt kein Platz. Was auch mittig nicht hineinpasst, wird auf ihn
+    // beschnitten; das Fenster lässt sich anschließend ziehen wie zuvor.
     RECT desired = { 0, 0, Scaled(preview, kInitialWidth), Scaled(preview, kInitialHeight) };
+    MONITORINFO monitor{};
+    monitor.cbSize = sizeof(monitor);
     if (AdjustWindowRectExForDpi(&desired, WS_OVERLAPPEDWINDOW, FALSE, WS_EX_DLGMODALFRAME,
-                                 preview.dpi))
+                                 preview.dpi) &&
+        GetMonitorInfoW(MonitorFromWindow(owner, MONITOR_DEFAULTTONEAREST), &monitor))
     {
-        RECT ownerRect{};
-        GetWindowRect(owner, &ownerRect);
-        const int width = desired.right - desired.left;
-        const int height = desired.bottom - desired.top;
-        SetWindowPos(preview.hwnd, nullptr,
-                     ownerRect.left + ((ownerRect.right - ownerRect.left) - width) / 2,
-                     ownerRect.top + ((ownerRect.bottom - ownerRect.top) - height) / 2, width,
-                     height, SWP_NOZORDER | SWP_NOACTIVATE);
+        const RECT& work = monitor.rcWork;
+        const int width = std::min<int>(desired.right - desired.left, work.right - work.left);
+        const int height = std::min<int>(desired.bottom - desired.top, work.bottom - work.top);
+        SetWindowPos(preview.hwnd, nullptr, work.left + ((work.right - work.left) - width) / 2,
+                     work.top + ((work.bottom - work.top) - height) / 2, width, height,
+                     SWP_NOZORDER | SWP_NOACTIVATE);
     }
 
     preview.font = CreateFontW(-MulDiv(9, static_cast<int>(preview.dpi), 72), 0, 0, 0, FW_NORMAL,
