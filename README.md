@@ -217,13 +217,14 @@ bedeutet also weiterhin, was in der Datei steht.
 
 ## Stand
 
-**Version 1.4.0**, alle elf Meilensteine abgeschlossen — Fenster,
+**Version 1.5.0**, alle elf Meilensteine abgeschlossen — Fenster,
 Direct2D-Darstellung, Datei per Kommandozeile, Multi-Frame-Dekodierung,
 Seitenwechsel, Icon-Leiste, Rotation, Zoom, Verschieben, Einpassen und
 Originalgröße, GIF-Animation, Ordnernavigation, Drag & Drop,
 EXIF-Orientierung, Hintergrund-Dekodierung, Vollbild, DPI-Wechsel,
 Fehlerbehandlung, Anwendungssymbol, Versionsangaben, Release-Build,
-Drucken mit Seitenansicht sowie die Dateiregistrierung.
+Drucken mit Seitenansicht, die Dateiregistrierung sowie die
+Einstellungen für den klassischen Druckdialog.
 
 Was bewusst nicht darin steckt — Rotation speichern, Löschen, Diashow — steht
 in [PLAN.md](PLAN.md).
