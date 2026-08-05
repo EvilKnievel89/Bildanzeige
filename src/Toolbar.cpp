@@ -102,16 +102,39 @@ namespace
 
     // Bogen von 315 Grad nach 225 Grad im Uhrzeigersinn -- die Lücke liegt
     // damit oben, die Pfeilspitze sitzt oben links und zeigt nach oben rechts.
-    constexpr float kArcCx = 12.0f;
-    constexpr float kArcCy = 12.0f;
     constexpr float kArcR = 6.5f;
     constexpr float kArcStartDeg = 315.0f;
     constexpr float kArcEndDeg = 225.0f;
 
-    D2D1_POINT_2F OnCircle(float degrees)
+    // Zahnrad: sechs Zähne um eine weite Bohrung.
+    //
+    // Es ist das einzige gefüllte Rundstück der Leiste, und das aus einem
+    // Maßgrund: bei 20 px Icongröße misst eine Zahnlücke keine drei
+    // Bildpunkte, der Strich aber schon fast zwei. Als Umriss gezogen liefen
+    // die beiden Zahnflanken darin ineinander, und aus dem Zahnrad würde ein
+    // Kringel mit Beulen. Gefüllt bleibt die Form lesbar, und die Bohrung
+    // nimmt ihr das Gewicht, das eine volle Scheibe neben den luftigen
+    // Umrissen ringsum hätte.
+    constexpr int kGearTeeth = 6;
+    constexpr float kGearOuter = 10.4f;    // Kopfkreis, über die Zähne
+    constexpr float kGearInner = 7.4f;     // Fußkreis, Grund der Lücken
+    constexpr float kGearBore = 4.5f;
+    constexpr float kGearToothHalfDeg = 13.0f;
+    constexpr float kGearFlankDeg = 6.0f;   // Schräge zwischen Zahn und Lücke
+
+    // Punkt auf einem Kreis um die Mitte des Entwurfsrasters. Der Winkel wächst
+    // im Uhrzeigersinn, weil die y-Achse nach unten zeigt -- eine Drehung im
+    // Uhrzeigersinn ist damit dieselbe Richtung wie ein wachsender Winkel.
+    D2D1_POINT_2F Polar(float degrees, float radius)
     {
         const float rad = degrees * kPi / 180.0f;
-        return D2D1::Point2F(kArcCx + kArcR * std::cos(rad), kArcCy + kArcR * std::sin(rad));
+        const float center = kIconBox * 0.5f;
+        return D2D1::Point2F(center + radius * std::cos(rad), center + radius * std::sin(rad));
+    }
+
+    D2D1_POINT_2F OnCircle(float degrees)
+    {
+        return Polar(degrees, kArcR);
     }
 
     HRESULT CreateTriangle(ID2D1Factory* factory, ID2D1PathGeometry** out)
@@ -266,6 +289,63 @@ namespace
         *out = geometry.Detach();
         return S_OK;
     }
+
+    HRESULT CreateGear(ID2D1Factory* factory, ID2D1PathGeometry** out)
+    {
+        ComPtr<ID2D1PathGeometry> geometry;
+        HRESULT hr = factory->CreatePathGeometry(&geometry);
+        if (FAILED(hr))
+            return hr;
+
+        ComPtr<ID2D1GeometrySink> sink;
+        hr = geometry->Open(&sink);
+        if (FAILED(hr))
+            return hr;
+
+        // Die Bohrung ist eine zweite Figur. Bei alternierender Füllung -- der
+        // Vorgabe, hier nur ausgeschrieben -- bleibt sie dadurch offen, ohne
+        // dass ihre Umlaufrichtung der des Umrisses entgegenlaufen müsste.
+        sink->SetFillMode(D2D1_FILL_MODE_ALTERNATE);
+
+        constexpr float pitch = 360.0f / static_cast<float>(kGearTeeth);
+
+        // Ein Zahn ist ein Bogen auf dem Kopfkreis, eine Schräge hinunter, ein
+        // Bogen auf dem Fußkreis und eine Schräge hinauf zum nächsten. Der Zug
+        // beginnt an der vorderen Flanke des ersten Zahns, damit jeder
+        // Durchgang dieselben vier Stücke setzt und keiner einen Rest lässt.
+        sink->BeginFigure(Polar(-kGearToothHalfDeg, kGearOuter), D2D1_FIGURE_BEGIN_FILLED);
+        for (int tooth = 0; tooth < kGearTeeth; ++tooth)
+        {
+            const float base = static_cast<float>(tooth) * pitch;
+            sink->AddArc(D2D1::ArcSegment(Polar(base + kGearToothHalfDeg, kGearOuter),
+                                          D2D1::SizeF(kGearOuter, kGearOuter), 0.0f,
+                                          D2D1_SWEEP_DIRECTION_CLOCKWISE, D2D1_ARC_SIZE_SMALL));
+            sink->AddLine(Polar(base + kGearToothHalfDeg + kGearFlankDeg, kGearInner));
+            sink->AddArc(D2D1::ArcSegment(
+                Polar(base + pitch - kGearToothHalfDeg - kGearFlankDeg, kGearInner),
+                D2D1::SizeF(kGearInner, kGearInner), 0.0f, D2D1_SWEEP_DIRECTION_CLOCKWISE,
+                D2D1_ARC_SIZE_SMALL));
+            sink->AddLine(Polar(base + pitch - kGearToothHalfDeg, kGearOuter));
+        }
+        sink->EndFigure(D2D1_FIGURE_END_CLOSED);
+
+        // Ein voller Kreis geht nicht als ein einziger Bogen: Anfang und Ende
+        // fielen zusammen, und damit stünde nicht fest, welcher Weg gemeint
+        // ist. Also zwei Hälften.
+        sink->BeginFigure(Polar(0.0f, kGearBore), D2D1_FIGURE_BEGIN_FILLED);
+        sink->AddArc(D2D1::ArcSegment(Polar(180.0f, kGearBore), D2D1::SizeF(kGearBore, kGearBore),
+                                      0.0f, D2D1_SWEEP_DIRECTION_CLOCKWISE, D2D1_ARC_SIZE_SMALL));
+        sink->AddArc(D2D1::ArcSegment(Polar(360.0f, kGearBore), D2D1::SizeF(kGearBore, kGearBore),
+                                      0.0f, D2D1_SWEEP_DIRECTION_CLOCKWISE, D2D1_ARC_SIZE_SMALL));
+        sink->EndFigure(D2D1_FIGURE_END_CLOSED);
+
+        hr = sink->Close();
+        if (FAILED(hr))
+            return hr;
+
+        *out = geometry.Detach();
+        return S_OK;
+    }
 }
 
 Toolbar::Toolbar()
@@ -304,6 +384,14 @@ Toolbar::Toolbar()
         // Kurzhilfe steht aber fest -- sie jedes Mal umzumelden wäre Aufwand
         // für einen Wortlaut, den ohnehin nur einer von beiden Zuständen liest.
         { ToolbarCommand::Fullscreen,   L"Vollbild ein/aus (F11)",      true,  false, true,  false, {} },
+
+        // Die Einstellungen stehen nicht in der Reihe, sondern fest am rechten
+        // Rand. Sie gehören nicht zum Bild, das gerade dasteht -- die Leiste
+        // zeigt sonst nur Handgriffe daran --, und ein fester Platz erspart es,
+        // sie zu suchen, wenn die Gruppe daneben je nach Datei wächst und
+        // schrumpft. Die Trennlinie entfällt: der Abstand zum Rand trennt schon.
+        { ToolbarCommand::Settings,     L"Einstellungen",               false, false, true,  false, {},
+                                                                        true },
     };
 }
 
@@ -321,7 +409,10 @@ HRESULT Toolbar::CreateResources(ID2D1Factory* factory)
     hr = CreateArcHead(factory, arcHead_.ReleaseAndGetAddressOf());
     if (FAILED(hr))
         return hr;
-    return CreatePrinter(factory, printer_.ReleaseAndGetAddressOf());
+    hr = CreatePrinter(factory, printer_.ReleaseAndGetAddressOf());
+    if (FAILED(hr))
+        return hr;
+    return CreateGear(factory, gear_.ReleaseAndGetAddressOf());
 }
 
 void Toolbar::DiscardDeviceResources()
@@ -339,7 +430,9 @@ float Toolbar::Height() const
     return std::floor(kBarHeight * dpiScale_ + 0.5f);
 }
 
-// Breite, die die sichtbaren Knöpfe samt Zwischenräumen einnehmen.
+// Breite, die die sichtbaren Knöpfe der mittigen Gruppe samt Zwischenräumen
+// einnehmen. Der rechte Block bleibt außen vor: er steht nicht in dieser Reihe
+// und verschöbe sie sonst aus der Mitte.
 float Toolbar::ButtonsWidth() const
 {
     const float button = std::floor(kButtonSize * dpiScale_ + 0.5f);
@@ -350,10 +443,29 @@ float Toolbar::ButtonsWidth() const
     bool anyPlaced = false;
     for (const ToolbarButton& b : buttons_)
     {
-        if (!b.visible)
+        if (!b.visible || b.trailing)
             continue;
         if (anyPlaced)
             total += b.groupStart ? groupGap : gap;
+        total += button;
+        anyPlaced = true;
+    }
+    return total;
+}
+
+float Toolbar::TrailingWidth() const
+{
+    const float button = std::floor(kButtonSize * dpiScale_ + 0.5f);
+    const float gap = std::floor(kButtonGap * dpiScale_ + 0.5f);
+
+    float total = 0.0f;
+    bool anyPlaced = false;
+    for (const ToolbarButton& b : buttons_)
+    {
+        if (!b.visible || !b.trailing)
+            continue;
+        if (anyPlaced)
+            total += gap;
         total += button;
         anyPlaced = true;
     }
@@ -364,7 +476,17 @@ float Toolbar::MinimumWidth() const
 {
     // Beidseits ein Zwischenraum als Luft zum Rand; ohne ihn klebten die
     // äußeren Knöpfe genau auf der Kante.
-    return ButtonsWidth() + 2.0f * std::floor(kButtonGap * dpiScale_ + 0.5f);
+    const float edge = std::floor(kButtonGap * dpiScale_ + 0.5f);
+    const float trailing = TrailingWidth();
+    if (trailing <= 0.0f)
+        return ButtonsWidth() + 2.0f * edge;
+
+    // Mit einem Block am rechten Rand reicht das nicht mehr: die Gruppe bleibt
+    // mittig, und was rechts an Platz weggeht, muss deshalb links genauso
+    // freibleiben -- sonst rutschte die Gruppe zwar noch ins Fenster, liefe
+    // aber unter das Zahnrad. Der Gruppenabstand hält beide auseinander.
+    const float groupGap = std::floor(kGroupGap * dpiScale_ + 0.5f);
+    return ButtonsWidth() + 2.0f * (trailing + groupGap + edge);
 }
 
 const ToolbarButton* Toolbar::Find(ToolbarCommand command) const
@@ -417,6 +539,8 @@ void Toolbar::Layout(float clientWidth, float clientHeight)
     bool anyPlaced = false;
     for (ToolbarButton& b : buttons_)
     {
+        if (b.trailing)
+            continue;   // steht rechts, nicht in dieser Reihe
         if (!b.visible)
         {
             b.rect = D2D1::RectF(0.0f, 0.0f, 0.0f, 0.0f);
@@ -437,6 +561,32 @@ void Toolbar::Layout(float clientWidth, float clientHeight)
         b.rect = D2D1::RectF(x, y, x + button, y + button);
         x += button;
         anyPlaced = true;
+    }
+
+    PlaceTrailing(clientWidth, y);
+}
+
+// Der rechte Block, von der Kante nach innen aufgereiht. Er hängt am Rand des
+// Fensters und nicht an der Gruppe: was die Gruppe gerade zeigt, ändert sich
+// mit der Datei, seine Lage soll das nicht tun.
+void Toolbar::PlaceTrailing(float clientWidth, float y)
+{
+    const float button = std::floor(kButtonSize * dpiScale_ + 0.5f);
+    const float gap = std::floor(kButtonGap * dpiScale_ + 0.5f);
+
+    float right = clientWidth - gap;
+    for (auto it = buttons_.rbegin(); it != buttons_.rend(); ++it)
+    {
+        ToolbarButton& b = *it;
+        if (!b.trailing)
+            continue;
+        if (!b.visible)
+        {
+            b.rect = D2D1::RectF(0.0f, 0.0f, 0.0f, 0.0f);
+            continue;
+        }
+        b.rect = D2D1::RectF(right - button, y, right, y + button);
+        right -= button + gap;
     }
 }
 
@@ -553,6 +703,11 @@ void Toolbar::DrawIcon(ID2D1RenderTarget* target, const ToolbarButton& button, I
 
     case ToolbarCommand::Fullscreen:
         DrawFullscreen(target, brush);
+        break;
+
+    case ToolbarCommand::Settings:
+        if (gear_)
+            target->FillGeometry(gear_.Get(), brush);
         break;
 
     case ToolbarCommand::RotateLeft:

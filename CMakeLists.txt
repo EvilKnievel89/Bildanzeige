@@ -28,6 +28,8 @@ add_executable(Bildanzeige WIN32
     src/PrintPreview.cpp
     src/FileAssociation.cpp
     src/AssociationDialog.cpp
+    src/PrintDialogSetting.cpp
+    src/SettingsDialog.cpp
     res/Bildanzeige.rc
 )
 

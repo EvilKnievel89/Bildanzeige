@@ -22,6 +22,7 @@ enum class ToolbarCommand
     RotateRight,
     Print,
     Fullscreen,
+    Settings,
 };
 
 struct ToolbarButton
@@ -33,6 +34,11 @@ struct ToolbarButton
     bool visible;
     bool enabled;
     D2D1_RECT_F rect;     // von Layout() gefüllt, in Pixeln
+
+    // Steht am rechten Rand statt in der mittigen Gruppe. Der Wert kommt
+    // zuletzt, damit die Zeilen der Leiste, für die er nicht gilt, ihn gar
+    // nicht erst aufführen müssen.
+    bool trailing = false;
 };
 
 // Flache Leiste am unteren Rand. Die Icons sind Pfadgeometrien statt Bitmaps,
@@ -50,7 +56,8 @@ public:
 
     // Breite, unter die das Fenster nicht schrumpfen darf: darunter stünden die
     // äußeren Knöpfe über den Rand hinaus und wären nicht mehr zu treffen.
-    // Hängt davon ab, welche Knöpfe gerade sichtbar sind.
+    // Hängt davon ab, welche Knöpfe gerade sichtbar sind -- und davon, dass die
+    // mittige Gruppe dem rechten Block ausweichen können muss.
     float MinimumWidth() const;
 
     void SetVisible(ToolbarCommand command, bool visible);
@@ -75,7 +82,8 @@ public:
     const std::vector<ToolbarButton>& Buttons() const { return buttons_; }
 
 private:
-    float ButtonsWidth() const;
+    float ButtonsWidth() const;    // nur die mittige Gruppe
+    float TrailingWidth() const;   // nur der rechte Block
     const ToolbarButton* Find(ToolbarCommand command) const;
     ToolbarButton* Find(ToolbarCommand command);
     void DrawIcon(ID2D1RenderTarget* target, const ToolbarButton& button, ID2D1Brush* brush);
@@ -84,6 +92,7 @@ private:
     void DrawOneToOne(ID2D1RenderTarget* target, ID2D1Brush* brush);
     void DrawPlayPause(ID2D1RenderTarget* target, ID2D1Brush* brush);
     void DrawFullscreen(ID2D1RenderTarget* target, ID2D1Brush* brush);
+    void PlaceTrailing(float clientWidth, float y);
 
     std::vector<ToolbarButton> buttons_;
     std::vector<float> separators_;   // x-Positionen der Trennlinien
@@ -99,5 +108,6 @@ private:
     ComPtr<ID2D1PathGeometry> arcBody_;    // Rotationsbogen im Uhrzeigersinn
     ComPtr<ID2D1PathGeometry> arcHead_;    // zugehörige Pfeilspitze
     ComPtr<ID2D1PathGeometry> printer_;    // Kasten mit Blatt hinein und heraus
+    ComPtr<ID2D1PathGeometry> gear_;       // Zahnrad mit Bohrung, gefüllt
     ComPtr<ID2D1SolidColorBrush> brush_;
 };

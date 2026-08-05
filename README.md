@@ -144,6 +144,24 @@ erste Lücke; für die zweite blättert man in ihr zur gewünschten Seite, die d
 als aktuelle Seite in den Auftrag geht. Näheres in [PLAN.md](PLAN.md),
 Abschnitt 9.
 
+Ganz rechts in der Leiste, abgesetzt von den übrigen Knöpfen, steht ein
+**Zahnrad**. Es öffnet ein kleines Fenster mit einer einzigen Einstellung:
+*Klassischen Windows-Druckdialog verwenden*. Windows 11 hat den Druckdialog
+aller Win32-Anwendungen gegen einen eigenen ausgetauscht; der Haken holt den
+alten zurück, indem er unter
+`Software\Microsoft\Print\UnifiedPrintDialog` den Wert
+`PreferLegacyPrintDialog` setzt. Der Stand kommt bei jedem Öffnen frisch aus
+der Registrierung, geschrieben wird erst mit `OK`.
+
+Die Umstellung wirkt beim nächsten Druckdialog — `comdlg32.dll` liest den Wert
+bei jedem Aufruf neu, und sie läuft im Prozess der druckenden Anwendung. Ein
+Neustart von Windows, des Explorers oder der Anwendung ist dafür nicht nötig.
+Die Einstellung gilt für alle Anwendungen, nicht nur für die Bildanzeige.
+Geschrieben wird nach `HKEY_CURRENT_USER`; nur wenn die Bildanzeige erhöht
+läuft **und** unter `HKEY_LOCAL_MACHINE` bereits ein solcher Wert steht, geht
+sie dorthin. Angelegt wird er dort nicht — ein rechnerweiter Eintrag, den
+vorher niemand gesetzt hat, entschiede für alle Benutzer mit.
+
 Im **Fenstermenü** (Alt+Leertaste oder Rechtsklick auf die Titelleiste) steht
 vor „Schließen" der Eintrag „Dateizuordnungen …". Dort lässt sich die
 Bildanzeige für die gängigen Bildformate eintragen — angehakt wird jede Endung

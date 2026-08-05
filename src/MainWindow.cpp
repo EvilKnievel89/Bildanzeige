@@ -3,6 +3,7 @@
 #include "AssociationDialog.h"
 #include "PrintPreview.h"
 #include "Resource.h"
+#include "SettingsDialog.h"
 
 #include <commctrl.h>
 #include <dwmapi.h>
@@ -779,6 +780,16 @@ void MainWindow::Execute(ToolbarCommand command)
         ToggleFullscreen();
         break;
 
+    case ToolbarCommand::Settings:
+        // Angehalten wie vor dem Druckdialog und den Dateizuordnungen: das
+        // Fenster ist zwar gesperrt, der Zeitgeber schlägt in der
+        // Nachrichtenschleife des Dialogs aber weiter, und eine Animation
+        // hinter einem gesperrten Fenster kostet nur Strom.
+        StopPlayback();
+        ShowSettingsDialog(hwnd_);
+        ApplyButtonStates();
+        break;
+
     default:
         break;
     }
@@ -1102,8 +1113,10 @@ void MainWindow::ApplyButtonStates()
     toolbar_.SetEnabled(ToolbarCommand::Print, hasImage && document_.IsOpen());
 
     // Das Vollbild hängt am Fenster, nicht am Bild: es bleibt auch dann
-    // erreichbar, wenn gerade nichts geladen ist.
+    // erreichbar, wenn gerade nichts geladen ist. Für die Einstellungen gilt
+    // dasselbe -- sie stehen ohnehin neben der Anzeige.
     toolbar_.SetEnabled(ToolbarCommand::Fullscreen, true);
+    toolbar_.SetEnabled(ToolbarCommand::Settings, true);
 }
 
 void MainWindow::InvalidateToolbar()
