@@ -1,3 +1,10 @@
+# Bildanzeige -- Copyright (C) 2026 EvilKnievel89
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Freie Software unter der GNU GPL, Version 3 oder einer späteren: weitergeben
+# und verändern ist erlaubt, solange Quelltext und Lizenz mitgehen. Ohne jede
+# Gewährleistung. Wortlaut in LICENSE, Erklärung in LIZENZ.md.
+
 cmake_minimum_required(VERSION 3.21)
 
 # Diese Nummer ist die einzige Stelle, an der die Version steht. Die

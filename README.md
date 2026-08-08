@@ -5,8 +5,8 @@ Faxanzeige*. Win32 + WIC + Direct2D, keine externen Abhängigkeiten.
 
 ![Screenshot of ui.](/screenshots/screenshot-ui.png)
 
-Planung und Entwurf: [PLAN.md](PLAN.md) · Lizenz: [MIT mit Commons
-Clause](LICENSE) — alles erlaubt außer Verkaufen
+Planung und Entwurf: [PLAN.md](PLAN.md) · Lizenz: [GNU GPL v3 oder
+später](LICENSE) — freie Software, Ableitungen bleiben frei
 
 ## Bauen
 
@@ -231,16 +231,22 @@ in [PLAN.md](PLAN.md).
 
 ## Lizenz
 
-[MIT-Lizenz mit der Bedingung „Commons Clause"](LICENSE): benutzen, verändern,
-weitergeben und einsetzen darf sie jeder, privat wie im Betrieb. Verkaufen
-nicht — weder die Software selbst noch ein Produkt oder einen Dienst, dessen
-Wert im Wesentlichen auf ihrer Funktion beruht. Damit ist sie „source
-available", nicht Open Source im Sinne der OSI, deren Definition den Verkauf
-ausdrücklich einschließt.
+[GNU General Public License, Version 3 oder eine spätere](LICENSE): benutzen,
+verändern, weitergeben und einsetzen darf sie jeder, privat wie im Betrieb und
+auch gegen Geld. Wer sie weitergibt, gibt den zugehörigen Quelltext und dieselbe
+Lizenz mit — aus einer Ableitung wird also kein geschlossenes Programm. Eine
+Gewährleistung gibt es nicht.
 
-Das Anwendungssymbol ist nicht von mir: es stammt aus dem Satz *Small & Flat*
-von paomedia und ist gemeinfrei (CC0 1.0). Näheres unter „Drittmaterial" in
-der [LICENSE](LICENSE).
+Bis Version 1.5.1 galt MIT mit der Bedingung „Commons Clause", die den Verkauf
+untersagte und die Bildanzeige damit auf „source available" festlegte. Die GPL
+schränkt an der anderen Stelle ein: sie erlaubt den Verkauf ausdrücklich und
+verlangt dafür die Offenlegung. Damit ist die Bildanzeige nun freie Software im
+Sinne der FSF und Open Source im Sinne der OSI.
+
+Deutsche Erläuterung, was das für die Weitergabe der EXE heißt, sowie die
+Herkunft des Anwendungssymbols — es ist nicht von mir, sondern aus dem Satz
+*Small & Flat* von paomedia und gemeinfrei (CC0 1.0) — stehen in
+[LIZENZ.md](LIZENZ.md).
 
 ## Testdaten
 

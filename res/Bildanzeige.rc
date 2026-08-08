@@ -1,4 +1,11 @@
-﻿#include <winres.h>
+﻿// Bildanzeige -- Copyright (C) 2026 EvilKnievel89
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// Freie Software unter der GNU GPL, Version 3 oder einer späteren: weitergeben
+// und verändern ist erlaubt, solange Quelltext und Lizenz mitgehen. Ohne jede
+// Gewährleistung. Wortlaut in LICENSE, Erklärung in LIZENZ.md.
+
+#include <winres.h>
 
 #include "Resource.h"
 #include "Version.h"
@@ -40,7 +47,10 @@ BEGIN
             VALUE "OriginalFilename","Bildanzeige.exe"
             VALUE "ProductName",     "Bildanzeige"
             VALUE "ProductVersion",  VER_STRING
-            VALUE "LegalCopyright",  "Copyright (C) 2026 EvilKnievel89"
+            // Die EXE ist portabel und wandert leicht ohne ihr Verzeichnis.
+            // Deshalb steht die Lizenz auch hier, wo die Dateieigenschaften
+            // sie zeigen -- und nicht nur in LICENSE daneben.
+            VALUE "LegalCopyright",  "Copyright (C) 2026 EvilKnievel89 -- GNU GPL v3 oder später, ohne Gewährleistung"
             VALUE "Comments",        "Schlanker Bildbetrachter im Geist der Windows Bild- und Faxanzeige."
         END
     END

@@ -1,4 +1,11 @@
-﻿# Die beiden TIFFs:
+﻿# Bildanzeige -- Copyright (C) 2026 EvilKnievel89
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Freie Software unter der GNU GPL, Version 3 oder einer späteren: weitergeben
+# und verändern ist erlaubt, solange Quelltext und Lizenz mitgehen. Ohne jede
+# Gewährleistung. Wortlaut in LICENSE, Erklärung in LIZENZ.md.
+
+# Die beiden TIFFs:
 #
 #   mehrseitig.tif  3 Seiten zu 900x600, 400x900 und 1400x500 -- die
 #                   Einpassung muss je Seite neu rechnen

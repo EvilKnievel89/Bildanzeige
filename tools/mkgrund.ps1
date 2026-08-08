@@ -1,4 +1,11 @@
-﻿# Die beiden Grundbilder und die Notiz:
+﻿# Bildanzeige -- Copyright (C) 2026 EvilKnievel89
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Freie Software unter der GNU GPL, Version 3 oder einer späteren: weitergeben
+# und verändern ist erlaubt, solange Quelltext und Lizenz mitgehen. Ohne jede
+# Gewährleistung. Wortlaut in LICENSE, Erklärung in LIZENZ.md.
+
+# Die beiden Grundbilder und die Notiz:
 #
 #   gross.png              3000x2000 -- muss verkleinert eingepasst werden
 #   klein.png              120x80    -- darf *nicht* aufgeblasen werden

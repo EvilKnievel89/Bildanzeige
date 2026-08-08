@@ -63,9 +63,14 @@ jobs:
           name: Bildanzeige
           path: build/Release/Bildanzeige.exe
 
+      # Die Lizenz haengt mit am Release: die EXE ist portabel und wandert
+      # leicht allein weiter. Der Quelltext, den die GPL dazu verlangt, liegt
+      # ohnehin als Archiv an jedem Tag -- das legt GitHub von selbst an.
       - name: Release anlegen
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v3
         with:
-          files: build/Release/Bildanzeige.exe
+          files: |
+            build/Release/Bildanzeige.exe
+            LICENSE
           generate_release_notes: true
